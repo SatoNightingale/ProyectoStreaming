@@ -16,8 +16,6 @@ import javafx.collections.ObservableMap;
 public class AdministradorUsuarios extends DataBaseIncremental<Usuario> implements Serializable {
     private final String adminPassword = "Heart-Shaped Box";
 
-    // private static final long serialVersionUID = 42L;
-
     public Usuario addUsuario(String nombre, String password, int tipoUsuario){
         return this.addElemento(nombre, password, tipoUsuario);
     }
@@ -69,10 +67,6 @@ public class AdministradorUsuarios extends DataBaseIncremental<Usuario> implemen
     public Usuario getUsuario(int id){
         return mapaElementos.get(id);
     }
-
-    // protected void writeAdditionalData(ObjectOutputStream out) throws IOException{}
-
-    // protected void readAdditionalData(ObjectInputStream in) throws IOException{}
 
     // Aquí hay que especificar métodos personalizados de serialización y deserialización para cargar las propiedades de javafx, que no son serializables
     // private void writeObject(ObjectOutputStream out) throws IOException{

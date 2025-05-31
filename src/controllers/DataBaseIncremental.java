@@ -27,7 +27,7 @@ public abstract class DataBaseIncremental<T> implements Serializable{
 
     protected abstract T registrarElemento(int id, Object...args); // throws Exception
 
-    public T addElemento(Object...args){ // throws Exception 
+    protected T addElemento(Object...args){ // throws Exception 
         // El índice es incremental, por eso rellenamos los lugares vacíos que puedan quedar tras alguna eliminación
         int i = 0;
         while (i < indiceInc && mapaElementos.containsKey(i)) i++;
@@ -41,7 +41,7 @@ public abstract class DataBaseIncremental<T> implements Serializable{
         return nuevoElemento;
     }
 
-    public void eliminarElemento(int id){
+    protected void eliminarElemento(int id){
         mapaElementos.remove(id);
         if(id == indiceInc) indiceInc--;
     }
@@ -65,7 +65,7 @@ public abstract class DataBaseIncremental<T> implements Serializable{
 
     // protected void readAdditionalData(ObjectInputStream in) throws IOException{}
 
-    public T getElemento(int id){ return mapaElementos.get(id); }
+    protected T getElemento(int id){ return mapaElementos.get(id); }
 
     // public ObservableMap<Integer, T> mapaElementosProperty(){ return mapaElementos; }
 }
