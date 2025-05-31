@@ -1,19 +1,14 @@
-package users;
+package modelo;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-import controllers.DataBaseIncremental;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableMap;
+import users.Administrador;
+import users.Consumidor;
+import users.Creador;
+import users.Usuario;
 
-public class AdministradorUsuarios extends DataBaseIncremental<Usuario> implements Serializable {
+public class AdministradorUsuarios extends DataBaseIncremental<Usuario> {
     private final String adminPassword = "Heart-Shaped Box";
 
     public Usuario addUsuario(String nombre, String password, int tipoUsuario){
@@ -64,9 +59,9 @@ public class AdministradorUsuarios extends DataBaseIncremental<Usuario> implemen
         return opt.isPresent()? opt.get() : null;
     }
 
-    public Usuario getUsuario(int id){
-        return mapaElementos.get(id);
-    }
+    // public Usuario getUsuario(int id){
+    //     return mapaElementos.get(id);
+    // }
 
     // Aquí hay que especificar métodos personalizados de serialización y deserialización para cargar las propiedades de javafx, que no son serializables
     // private void writeObject(ObjectOutputStream out) throws IOException{

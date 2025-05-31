@@ -1,25 +1,21 @@
-package contenidos;
+package modelo;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import controllers.DataBaseIncremental;
+
+import contenidos.Contenido;
+import contenidos.Etiqueta;
+import contenidos.ListaEtiquetas;
 import exceptions.RutaInvalidaException;
 import fileHandling.FileHandling;
-import javafx.collections.FXCollections;
 import users.*;
 
-public class AdministradorContenido extends DataBaseIncremental<Contenido> implements Serializable{
+public class AdministradorContenido extends DataBaseIncremental<Contenido> {
     private final String carpetaContenidos = "content";
     // private static final long serialVersionUID = 42L;
 
@@ -74,7 +70,7 @@ public class AdministradorContenido extends DataBaseIncremental<Contenido> imple
         return nuevoContenido;
     }
 
-    public String agregarMediaFile(String mediaPath, String nombre) throws IOException,RutaInvalidaException{
+    private String agregarMediaFile(String mediaPath, String nombre) throws IOException,RutaInvalidaException{
         String newPath = carpetaContenidos + File.separator + nombre;
 
         try {

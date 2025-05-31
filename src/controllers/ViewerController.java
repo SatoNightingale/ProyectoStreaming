@@ -4,7 +4,6 @@ import java.io.FileNotFoundException;
 
 import contenidos.Contenido;
 import contenidos.PlayList;
-import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -131,7 +130,7 @@ public class ViewerController extends SceneController{
         //     controlador.getAdminUsuarios().mapaUsuariosProperty()
         // ));
 
-        cmbCambiarUsuario.setItems(FXCollections.observableArrayList(controlador.getAdminUsuarios().getUsuarios()));
+        cmbCambiarUsuario.setItems(FXCollections.observableArrayList(controlador.getModelo().getUsuarios()));
 
         cmbCambiarUsuario.getSelectionModel().select(user.getId());
 

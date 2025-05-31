@@ -1,13 +1,7 @@
 package controllers;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InvalidClassException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -16,15 +10,15 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-
+import modelo.Modelo;
 import users.*;
 import contenidos.*;
-import exceptions.DatabasesNoEncontradasException;
 import exceptions.RutaInvalidaException;
 
 public class MainController extends Application {
-    private AdministradorUsuarios adminUsuarios;
-    private AdministradorContenido adminContenidos;
+    // private AdministradorUsuarios adminUsuarios;
+    // private AdministradorContenido adminContenidos;
+    private Modelo modelo;
     private AdministradorEscena adminEscena;
 
     public static void main(String[] args) throws Exception {
@@ -33,10 +27,11 @@ public class MainController extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        cargarBasesDatos();
+        this.modelo = Modelo.cargarModelo();
+
         adminEscena = new AdministradorEscena(primaryStage, this);
         
-        if(adminContenidos.getContenidos().isEmpty()){
+        if(modelo.getContenidos().isEmpty()){
             inicializarSimulador();
         }
         
@@ -49,17 +44,17 @@ public class MainController extends Application {
 
     public void inicializarSimulador(){
         System.out.println("Llamada a inicializarSimulador");
-        Creador creadorInit = (Creador) adminUsuarios.addUsuario("Satoshi", "04242564", 1);
+        Creador creadorInit = (Creador) modelo.addUsuario("Satoshi", "04242564", 1);
 
         try {
-            adminContenidos.addContenido(
+            modelo.addContenido(
                 "default content/Fairy Tail Main Theme.mp4", 
                 "Fairy Tail Main Theme (Demo Video)",
                 creadorInit, 
                 0, 
                 Arrays.asList(new Etiqueta("Anime", 5), new Etiqueta("Música", 3)));
 
-            adminContenidos.addContenido(
+            modelo.addContenido(
                 "default content/amaranth.mp4", 
                 "Nightwish - Amaranth (Demo Video)", 
                 creadorInit, 
@@ -75,7 +70,7 @@ public class MainController extends Application {
     }
 
     public void usuarioLogin(String nombre, String password) throws Exception{
-        Usuario user = adminUsuarios.getUsuario(nombre, password);
+        Usuario user = modelo.getUsuario(nombre, password);
         System.out.println(user);
         if(user != null){
             prepararVista(user);
@@ -85,8 +80,8 @@ public class MainController extends Application {
     }
 
     public void nuevoUsuario(String nombre, String password, String adminPassword, int tipoCuenta) throws Exception{
-        if(adminUsuarios.validarNuevoUsuario(nombre, password, adminPassword)){
-            Usuario nuevoUsuario = adminUsuarios.addUsuario(nombre, password, tipoCuenta);
+        if(modelo.validarNuevoUsuario(nombre, password, adminPassword)){
+            Usuario nuevoUsuario = modelo.addUsuario(nombre, password, tipoCuenta);
 
             prepararVista(nuevoUsuario);
         } else {
@@ -172,7 +167,7 @@ public class MainController extends Application {
      * @throws RutaInvalidaException Cuando el archivo no existe, o la ruta provista contiene caracteres no soportados
      */
     public void postearContenido(String mediaPath, String nombre, Creador creador, int tipoContenido, List<Etiqueta> etiquetas) throws IOException, RutaInvalidaException{
-        Contenido nc = adminContenidos.addContenido(mediaPath, nombre, creador, tipoContenido, etiquetas);
+        Contenido nc = modelo.addContenido(mediaPath, nombre, creador, tipoContenido, etiquetas);
         creador.getContenidosSubidos().add(nc);
         
         int cantContenidos = creador.getContenidosSubidos().size();
@@ -189,10 +184,10 @@ public class MainController extends Application {
      * @param creador El creador que posee este contenido
      */
     public void retirarContenido(int id){
-        Contenido aRetirar = adminContenidos.getElemento(id);
+        Contenido aRetirar = modelo.getContenido(id);
         Creador autor = aRetirar.getCreador();
 
-        adminContenidos.eliminarElemento(id);
+        modelo.eliminarContenido(id);
         autor.getContenidosSubidos().remove(aRetirar);
     }
     
@@ -205,7 +200,7 @@ public class MainController extends Application {
      * @return Una PlayList personalizada para el usuario
      */
     public PlayList crearPlaylistRecomendaciones(Usuario user){
-        List<Contenido> contenidos = adminContenidos.getContenidos();
+        List<Contenido> contenidos = modelo.getContenidos();
 
         List<Contenido> resultados = contenidos.stream()
             .sorted(Comparator.comparingDouble( // Ordena según los criterios especificados
@@ -220,73 +215,15 @@ public class MainController extends Application {
     }
 
 
-
-
-    public void cargarBasesDatos(){
-        File usersDBFile = new File("usuariosDB.bin");
-        File contenidosDBFile = new File("contenidosDB.bin");
-
-        try {
-            if(!usersDBFile.exists() || !contenidosDBFile.exists())
-                throw new DatabasesNoEncontradasException();
-
-            intentarLeerDatos(usersDBFile, contenidosDBFile);
-
-        } catch (DatabasesNoEncontradasException | InvalidClassException e) {
-            if(usersDBFile.exists())
-                usersDBFile.delete();
-            if(contenidosDBFile.exists())
-                contenidosDBFile.delete();
-
-            this.adminUsuarios = new AdministradorUsuarios();
-            this.adminContenidos = new AdministradorContenido();
-        } catch (ClassNotFoundException | IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
-
     public void intentarGuardarDatos(WindowEvent event){
         try{
-            guardarDatos();
+            modelo.guardarDatos();
         } catch(FileNotFoundException ex){
             System.out.println(ex.getMessage());
         } catch(IOException ex) {
             ex.printStackTrace();
         }
     }
-    
-    public void guardarDatos() throws FileNotFoundException, IOException{
-        ObjectOutputStream osUserDB = new ObjectOutputStream(new FileOutputStream("usuariosDB.bin"));
-        ObjectOutputStream osContentDB = new ObjectOutputStream(new FileOutputStream("contenidosDB.bin"));
-
-        System.out.println("adminUsuarios size at save: " + adminUsuarios.getUsuarios().size());
-        System.out.println("adminContenidos size at save: " + adminContenidos.getContenidos().size());
-
-        osUserDB.writeObject(adminUsuarios);
-        osContentDB.writeObject(adminContenidos);
-
-        osUserDB.close();
-        osContentDB.close();
-    }
-
-    public void intentarLeerDatos(File userDBFile, File contentDBFile) throws FileNotFoundException, IOException, ClassNotFoundException{
-        ObjectInputStream inUserDB = new ObjectInputStream(new FileInputStream(userDBFile));
-        ObjectInputStream inContentDB = new ObjectInputStream(new FileInputStream(contentDBFile));
-
-        adminUsuarios = (AdministradorUsuarios) inUserDB.readObject();
-        adminContenidos = (AdministradorContenido) inContentDB.readObject();
-
-        // System.out.println("adminUsuarios size at load: " + adminUsuarios.getUsuarios().size());
-        // System.out.println("adminContenidos size at load: " + adminContenidos.getContenidos().size());
-
-        adminUsuarios.listarUsuarios();
-        adminContenidos.listarContenidos();
-
-        inUserDB.close();
-        inContentDB.close();
-    }
-
 
     public static Alert showErrorMessage(String mensaje){
         Alert mensajeError = new Alert(Alert.AlertType.ERROR, mensaje, ButtonType.CLOSE);
@@ -296,6 +233,5 @@ public class MainController extends Application {
         return mensajeError;
     }
 
-    public AdministradorUsuarios getAdminUsuarios(){ return adminUsuarios; }
-    public AdministradorContenido getAdminContenidos(){ return adminContenidos; }
+    public Modelo getModelo(){ return modelo; }
 }

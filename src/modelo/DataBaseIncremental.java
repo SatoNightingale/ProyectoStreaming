@@ -1,18 +1,13 @@
-package controllers;
+package modelo;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableMap;
-
 public abstract class DataBaseIncremental<T> implements Serializable{
     // Originalmente iba a hacer esto con ObservableMap, pero es que es una candela tan grande y con tantas complicaciones que ni yo mismo la entiendo muy bien, y no es como para ponértelo a ti. Decidí hacer todo lo más sencillo posible
 
+    // Sin embargo, tengo que hacer esto con mapas. Te explico por qué: porque a cada elemento (usuario o contenido) le tengo que asignar un ID para poder referenciarlo después y eliminarlo. Es decir, aunque los usuarios y los contenidos tengan el mismo nombre, lo que los diferencia es el ID
     // protected transient ObservableMap<Integer, T> mapaElementos;
     protected Map<Integer, T> mapaElementos;
 
