@@ -2,10 +2,13 @@ package controllers;
 
 import java.io.FileNotFoundException;
 
+import contenidos.Comentario;
 import contenidos.Contenido;
 import contenidos.PlayList;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -23,8 +26,9 @@ import javafx.scene.media.MediaPlayer.Status;
 import users.Usuario;
 
 public class ViewerController extends SceneController{
+    @FXML private VBox panelContenido;
     @FXML private Label lblAutor;
-    @FXML private ComboBox<Usuario> cmbCambiarUsuario;
+    @FXML private ComboBox<String> cmbCambiarUsuario;
     @FXML private VBox panelComentarios;
     @FXML private TextField tfdComentario;
     @FXML private Button btnEditarPerfil;
@@ -32,9 +36,6 @@ public class ViewerController extends SceneController{
     @FXML private Button btnLike;
     @FXML private MediaView Media;
     @FXML private Slider sldMediaProgress;
-    // @FXML private Button btnNext;
-    // @FXML private Button btnPlay;
-    // @FXML private Button btnPrev;
     @FXML ImageView ibnNext;
     @FXML ImageView ibnPlay;
     @FXML ImageView ibnPrev;
@@ -48,6 +49,10 @@ public class ViewerController extends SceneController{
     @FXML private Button btnPostContent;
     @FXML private Button btnAdministrar;
     @FXML private StackPane mediaZone;
+    @FXML private VBox boxComentarios;
+    @FXML private ImageView ibnCerrarComentarios;
+    @FXML private VBox boxBtnComentarios;
+    @FXML private Label lblUltimoComentario;
 
     private Usuario user;
     private PlayList actualPlayList;
@@ -67,8 +72,23 @@ public class ViewerController extends SceneController{
             updateBtnSuscribir(actualPlayList.contenidoActual());
         });
 
+        btnEnviarComentario.setOnAction(e -> {
+            controlador.usuarioComenta(user, actualPlayList.contenidoActual(), tfdComentario.getText());
+            updateLblComentarios();
+        });
+
         sldVolumen.valueProperty().addListener((observable, oldValue, newValue) -> 
             Media.getMediaPlayer().setVolume((double) newValue));
+
+        boxBtnComentarios.setOnMouseClicked(e -> {
+            panelComentarios.setVisible(true);
+            panelContenido.setVisible(false);
+        });
+
+        ibnCerrarComentarios.setOnMouseClicked(e -> {
+            panelComentarios.setVisible(false);
+            panelContenido.setVisible(true);
+        });
     }
 
     /** Este método se llama cuando se carga la pantalla del visor, ya sea por primera vez o porque hayan cambiado a esta
@@ -117,9 +137,11 @@ public class ViewerController extends SceneController{
 
         initProgressSlider();
 
-        content.getCreador().listarSuscriptores();
-        user.listarSuscripciones();
-        content.listarVotantes();
+        reconstruirComentarios(content);
+
+        // content.getCreador().listarSuscriptores();
+        // user.listarSuscripciones();
+        // content.listarVotantes();
     }
 
     private void initcmbCambiarUsuarios(){
@@ -130,7 +152,11 @@ public class ViewerController extends SceneController{
         //     controlador.getAdminUsuarios().mapaUsuariosProperty()
         // ));
 
-        cmbCambiarUsuario.setItems(FXCollections.observableArrayList(controlador.getModelo().getUsuarios()));
+        // Crea el comboBox de cambiar usuario con una lista de nombres de todos los usuarios
+        // También podría usar controlador.getModelo().getUsuarios(), pero para eso tendría que implementar el toString de Usuario y por cuestiones de debug lo necesito sin implementar
+        cmbCambiarUsuario.setItems(FXCollections.observableArrayList(
+            controlador.getModelo().getUsuarios().stream().map(Usuario::getNombre).toList()
+        ));
 
         cmbCambiarUsuario.getSelectionModel().select(user.getId());
 
@@ -231,6 +257,14 @@ public class ViewerController extends SceneController{
         }
     }
 
+    private void updateLblComentarios(){
+        if(!actualPlayList.contenidoActual().getComentarios().isEmpty()){
+            Comentario lastComment = actualPlayList.contenidoActual().getComentarios().get(actualPlayList.contenidoActual().getComentarios().size() - 1);
+
+            lblUltimoComentario.setText(lastComment.getAutor().getNombre() + ": " + lastComment.getTexto());
+        }else lblUltimoComentario.setText("Sin comentarios hasta ahora");
+    }
+
 
     @FXML private void initIbnPlay(MouseEvent evt){
         MediaPlayer player = Media.getMediaPlayer();
@@ -263,6 +297,21 @@ public class ViewerController extends SceneController{
         }
     }
 
+    private void reconstruirComentarios(Contenido content){
+        boxComentarios.getChildren().clear();
+
+        Comentario comment = null;
+
+        for (int i = 0; i < content.getComentarios().size(); i++) {
+            comment = content.getComentarios().get(i);
+            addPanelComentario(comment);
+        }
+
+        if(comment != null)
+            lblUltimoComentario.setText(comment.getAutor().getNombre() + ": " + comment.getTexto());
+        else lblUltimoComentario.setText("Sin comentarios hasta ahora");
+    }
+
     private String crearStringTiempo(Duration duracion){
         String horas, minutos, segundos;
 
@@ -276,5 +325,22 @@ public class ViewerController extends SceneController{
         if(segundos.length() < 2) segundos = "0" + segundos;
 
         return horas + ":" + minutos + ":" + segundos;
+    }
+
+    public void addPanelComentario(Comentario comment){
+        Label autorLabel = new Label(comment.getAutor().getNombre());
+        Label textoLabel = new Label(comment.getTexto());
+
+        VBox box = new VBox(autorLabel, textoLabel);
+
+        box.setStyle("-fx-border-color: black; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-background-color: #e0e0e0");
+        VBox.setMargin(box, new Insets(0, 10, 0, 10));
+        box.setPadding(new Insets(0, 10, 0, 10));
+
+        box.setPrefWidth(VBox.USE_COMPUTED_SIZE);
+        box.setPrefHeight(VBox.USE_COMPUTED_SIZE);
+        box.setMaxWidth(VBox.USE_PREF_SIZE);
+
+        boxComentarios.getChildren().add(box);
     }
 }

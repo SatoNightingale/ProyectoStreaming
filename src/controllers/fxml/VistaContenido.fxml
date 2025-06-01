@@ -6,6 +6,7 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
@@ -45,14 +46,14 @@
             </Label>
          </children>
          <BorderPane.margin>
-            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+            <Insets bottom="5.0" left="5.0" right="5.0" />
          </BorderPane.margin>
       </VBox>
    </right>
    <center>
-      <ScrollPane fitToHeight="true" fitToWidth="true" BorderPane.alignment="CENTER">
-         <content>
-            <VBox alignment="CENTER" spacing="6.0">
+      <StackPane prefHeight="150.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+         <children>
+            <VBox fx:id="panelContenido" alignment="CENTER" spacing="3.0">
                <children>
                   <StackPane fx:id="mediaZone" prefHeight="300.0" prefWidth="400.0" VBox.vgrow="ALWAYS">
                      <children>
@@ -67,7 +68,7 @@
                                        </HBox.margin>
                                     </Label>
                                     <Slider fx:id="sldMediaProgress" HBox.hgrow="ALWAYS" />
-                                    <Label fx:id="lblDuracionMedia" alignment="CENTER" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" text="00:00:00" textFill="WHITE">
+                                    <Label fx:id="lblDuracionMedia" alignment="CENTER" ellipsisString="" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" text="00:00:00" textFill="WHITE">
                                        <HBox.margin>
                                           <Insets left="10.0" />
                                        </HBox.margin>
@@ -136,7 +137,8 @@
                                        </HBox.margin>
                                        <padding>
                                           <Insets bottom="-1.0" left="-1.0" right="3.0" top="-1.0" />
-                                       </padding></Button>
+                                       </padding>
+                                    </Button>
                                  </children>
                               </HBox>
                            </children>
@@ -145,7 +147,7 @@
                            <children>
                               <Label fx:id="lblAutor" alignment="CENTER" contentDisplay="CENTER" text="Autor" HBox.hgrow="ALWAYS">
                                  <font>
-                                    <Font size="14.0" />
+                                    <Font size="16.0" />
                                  </font>
                               </Label>
                               <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
@@ -160,41 +162,76 @@
                         </HBox>
                      </children>
                   </VBox>
-                  <VBox prefWidth="100.0">
+                  <Separator prefWidth="200.0" />
+                  <VBox fx:id="boxBtnComentarios" style="-fx-border-color: black; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-background-color: #e0e0e0;">
                      <children>
                         <Label text="Comentarios">
-                           <VBox.margin>
-                              <Insets />
-                           </VBox.margin>
                            <font>
-                              <Font size="18.0" />
+                              <Font size="15.0" />
                            </font>
                         </Label>
-                        <VBox fx:id="panelComentarios" />
-                        <HBox spacing="5.0">
-                           <children>
-                              <TextField fx:id="tfdComentario" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="25.0" prefWidth="152.0" promptText="Escribe un comentario" HBox.hgrow="ALWAYS" />
-                              <Button fx:id="btnEnviarComentario" mnemonicParsing="false">
-                                 <graphic>
-                                    <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
-                                       <image>
-                                          <Image url="@../../resources/ic_action_send_now.png" />
-                                       </image>
-                                    </ImageView>
-                                 </graphic></Button>
-                           </children>
-                        </HBox>
+                        <Label fx:id="lblUltimoComentario" text="Label">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
                      </children>
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
                      <VBox.margin>
                         <Insets bottom="5.0" />
                      </VBox.margin>
                   </VBox>
                </children>
             </VBox>
-         </content>
-         <padding>
-            <Insets bottom="1.0" left="20.0" right="10.0" top="1.0" />
-         </padding>
-      </ScrollPane>
+            <VBox fx:id="panelComentarios" style="-fx-border-radius: 10px 10px 0px 0px; -fx-border-color: black;" visible="false">
+               <children>
+                  <HBox>
+                     <children>
+                        <Label alignment="CENTER" maxWidth="1.7976931348623157E308" text="Comentarios" textAlignment="CENTER" HBox.hgrow="ALWAYS">
+                           <font>
+                              <Font size="15.0" />
+                           </font>
+                        </Label>
+                        <ImageView fx:id="ibnCerrarComentarios" fitHeight="21.0" fitWidth="21.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../resources/ic_action_cancel%20light.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </HBox>
+                  <ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+                     <content>
+                        <VBox fx:id="boxComentarios" spacing="3.0">
+                           <padding>
+                              <Insets bottom="5.0" top="5.0" />
+                           </padding></VBox>
+                     </content>
+                  </ScrollPane>
+                  <HBox spacing="5.0">
+                     <children>
+                        <TextField fx:id="tfdComentario" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="25.0" prefWidth="152.0" promptText="Escribe un comentario" HBox.hgrow="ALWAYS" />
+                        <Button fx:id="btnEnviarComentario" mnemonicParsing="false">
+                           <graphic>
+                              <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@../../resources/ic_action_send_now.png" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                        </Button>
+                     </children>
+                  </HBox>
+               </children>
+               <StackPane.margin>
+                  <Insets bottom="3.0" />
+               </StackPane.margin>
+            </VBox>
+         </children>
+         <BorderPane.margin>
+            <Insets left="10.0" />
+         </BorderPane.margin>
+      </StackPane>
    </center>
 </BorderPane>

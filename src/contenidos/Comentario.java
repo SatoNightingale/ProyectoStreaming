@@ -12,4 +12,7 @@ public class Comentario implements Serializable{
         this.autor = autor;
         this.texto = texto;
     }
+
+    public Usuario getAutor(){ return autor; }
+    public String getTexto(){ return texto; }
 }

@@ -191,6 +191,12 @@ public class MainController extends Application {
         autor.getContenidosSubidos().remove(aRetirar);
     }
     
+    public void usuarioComenta(Usuario user, Contenido content, String texto){
+        Comentario comentario = new Comentario(user, texto);
+        content.getComentarios().add(comentario);
+        adminEscena.getVisorController().addPanelComentario(comentario);
+    }
+
     /** Crea una PlayList con recomendaciones de contenido personalizadas para este usuario.
      * Para ello toma las preferencias del usuario y organiza los contenidos que existen con un algoritmo que busca que las etiquetas de cada recomendación se adecúen lo más posible a las preferencias del usuario. Para esto es importante entender que, aunque el contenido y el usuario pueden tener etiquetas con el mismo nombre, sus pesos pueden ser distintos; es decir que aunque usuario y contenido compartan una misma etiqueta (con el mismo nombre), se trata de objetos diferentes con pesos diferentes.<br><br>
      *
@@ -218,7 +224,7 @@ public class MainController extends Application {
     public void intentarGuardarDatos(WindowEvent event){
         try{
             modelo.guardarDatos();
-        } catch(FileNotFoundException ex){
+        } catch(FileNotFoundException ex){ //TODO
             System.out.println(ex.getMessage());
         } catch(IOException ex) {
             ex.printStackTrace();

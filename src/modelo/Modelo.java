@@ -12,6 +12,7 @@ import java.util.List;
 
 import contenidos.Contenido;
 import contenidos.Etiqueta;
+import controllers.ViewerController;
 import exceptions.RutaInvalidaException;
 import users.Creador;
 import users.Usuario;
@@ -68,7 +69,7 @@ public class Modelo implements Serializable{
 
 
 
-    public static Modelo cargarModelo() throws IOException, ClassNotFoundException{
+    public static Modelo cargarModelo() {
         File inputFile = new File("data.bin");
         Modelo modelo;
 
@@ -77,7 +78,7 @@ public class Modelo implements Serializable{
             modelo = (Modelo) is.readObject();
             is.close();
         
-        } catch (IOException e){
+        } catch (IOException | ClassNotFoundException e){
             if(inputFile.exists()){
                 inputFile.delete();
                 System.out.println("Error al leer el archivo de datos");
@@ -137,8 +138,6 @@ public class Modelo implements Serializable{
         os.writeObject(this);
         os.close();
     }
-
-
 
     public List<Usuario> getUsuarios() { return adminUsuarios.getUsuarios(); }
     public List<Contenido> getContenidos() { return adminContenidos.getContenidos(); }
