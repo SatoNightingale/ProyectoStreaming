@@ -15,6 +15,7 @@ public class Contenido implements Serializable{
     protected String mediaPath;             // ruta al contenido
     protected int id;                       // ID único del contenido en la contentDB
     protected String nombre;                // Nombre del contenido
+    protected int tipo;                     // Tipo del contenido (0: Video, 1: Audio)
     protected Creador creador;              // Creador del contenido
     protected double duracion;              // duración del contenido en segundos
     protected ListaEtiquetas tags;          // las etiquetas del contenido
@@ -23,19 +24,13 @@ public class Contenido implements Serializable{
     protected int reproducciones;           // La cantidad de reproducciones de este contenido
     protected double sumTiempoReproducido;  // La suma de los porcientos del contenido reproducido en cada visualización
 
-    public void listarVotantes(){
-        System.out.println("Votantes de " + nombre + ":");
-
-        for(Usuario user : votantes)
-            System.out.println(user.getNombre() + "(" + user + ")");
-    }
-
-    public Contenido(int id, String mediaPath, String nombre, Creador creador, ListaEtiquetas etiquetas) throws FileNotFoundException {
+    public Contenido(int id, String mediaPath, String nombre, int tipo, Creador creador, ListaEtiquetas etiquetas) throws FileNotFoundException {
         this.mediaPath = mediaPath;
         this.media = cargarMedia(mediaPath);
         
         this.id = id;
         this.nombre = nombre;
+        this.tipo = tipo;
         this.creador = creador;
         this.votantes = new ArrayList<>();
         this.comentarios = new ArrayList<>();
@@ -79,6 +74,7 @@ public class Contenido implements Serializable{
 
     public String getNombre() {return nombre; }
     public Creador getCreador() { return creador; }
+    public int getTipoContenido(){ return tipo; }
     public ListaEtiquetas getTags() { return tags; }
     public Etiqueta getTag(String name){ return tags.getEtiqueta(name); }
     public List<Usuario> getVotantes(){ return votantes; }
@@ -86,4 +82,5 @@ public class Contenido implements Serializable{
     public List<Comentario> getComentarios(){ return comentarios; }
     public int getReproducciones(){ return reproducciones; }
     public Media getMedia(){ return media; }
+    public String getMediaPath(){ return mediaPath; }
 }

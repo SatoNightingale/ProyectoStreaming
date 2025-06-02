@@ -60,10 +60,21 @@ public class MainController extends Application {
                 creadorInit, 
                 0, 
                 Arrays.asList(new Etiqueta("Música", 3), new Etiqueta("Rock", 5)));
+
+            modelo.addContenido(
+                "default content/nemo.mp3",
+                "Nightwish - Nemo",
+                creadorInit,
+                1,
+                Arrays.asList(new Etiqueta("Música", 3), new Etiqueta("Metal sinfónico", 5)));
+
+            modelo.addContenido(
+                "default content/song of the caged bird.mp3",
+                "Lindsey Stirling - Song of the Caged Bird",
+                creadorInit,
+                1,
+                Arrays.asList(new Etiqueta("Música", 3), new Etiqueta("Violín", 5), new Etiqueta("Electrónica", 5)));
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (RutaInvalidaException e){
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
@@ -71,7 +82,7 @@ public class MainController extends Application {
 
     public void usuarioLogin(String nombre, String password) throws Exception{
         Usuario user = modelo.getUsuario(nombre, password);
-        System.out.println(user);
+        
         if(user != null){
             prepararVista(user);
         } else{
@@ -97,25 +108,30 @@ public class MainController extends Application {
         adminEscena.cambiarEscena("fxml/VistaContenido.fxml");
     }
 
-    /** Cuando el usuario termina de ver este contenido (o sea, pasa para otra cosa) se actualizan sus preferencias. Según la fracción del contenido que haya visto, se suman a sus preferencias las etiquetas del contenido multiplicadas por esta fracción. Así, por ejemplo, si ve la mitad del video, se añaden a sus etiquetas las mismas etiquetas del contenido pero con la mitad de su peso. Además, se actualiza el promedio de tiempo que este video es reproducido globalmente
+    /** Cuando el usuario termina de ver este contenido (o sea, pasa para otra cosa) se actualizan sus preferencias y las etiquetas del contenido. Según la fracción del contenido que haya visto, se suman a las preferencias del usuario las etiquetas del contenido multiplicadas por esta fracción, y viceversa, sus preferencias se suman a las etiquetas del contenido multiplicadas por la misma fracción, pero en una escala cuatro veces menor. Así, por ejemplo, si el usuario ve la mitad del video, se añaden a sus etiquetas las mismas etiquetas del contenido pero con la mitad de su peso; y al contenido se le añade solo la octava parte de las etiquetas del usuario. Además, se actualiza el promedio de tiempo que este video es reproducido globalmente
      * @param user El usuario que va a actualizar
      * @param content El contenido que el usuario ha visto
      * @param porcientoVisto La fracción del contenido que vio el usuario. Va desde 0.0 (no vio nada) a 1.0 (lo vio completo)
      */
-    public void usuarioVeContenido(Usuario user, Contenido content, double porcientoVisto){
-        List<Etiqueta> etiquetasContenido = content.getTags().getList();
-        ListaEtiquetas etiquetasUsuario = user.getPreferencias();
+    public void usuarioVeContenido(Usuario user, Contenido content, double fraccionVisto){
+        ListaEtiquetas listaEtiquetasUsuario = user.getPreferencias();
+        List<Etiqueta> etiquetasUsuario = listaEtiquetasUsuario.getList();
+        ListaEtiquetas listaEtquietasContenido = content.getTags();
+        List<Etiqueta> etiquetasContenido = listaEtquietasContenido.getList();
 
         for (Etiqueta etiqueta : etiquetasContenido) {
-            etiquetasUsuario.actualizarEtiqueta(etiqueta.getNombre(), etiqueta.getPeso() / porcientoVisto);
+            listaEtiquetasUsuario.actualizarEtiqueta(etiqueta.getNombre(), etiqueta.getPeso() / fraccionVisto);
         }
 
-        content.addReproduccion(porcientoVisto);
+        for (Etiqueta etiqueta : etiquetasUsuario) {
+            listaEtquietasContenido.actualizarEtiqueta(etiqueta.getNombre(), (etiqueta.getPeso() / fraccionVisto) / 4);
+        }
+
+        content.addReproduccion(fraccionVisto);
     }
 
     public void usuarioTocaLike(Usuario user, Contenido content){
         if(!content.getVotantes().contains(user)){
-            System.out.println("Contenido no tiene a " + user.getNombre() + "(" + user + ") como votante");
             ListaEtiquetas etiquetasUsuario = user.getPreferencias();
             List<Etiqueta> etiquetasCreador = content.getCreador().getTemas().getList();
 
@@ -125,7 +141,6 @@ public class MainController extends Application {
 
             content.getVotantes().add(user);
         } else {
-            System.out.println("Contenido tiene a " + user.getNombre() + "(" + user + ") como votante");
             content.getVotantes().remove(user);
         }
     }

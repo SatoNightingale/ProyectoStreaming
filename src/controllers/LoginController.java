@@ -11,7 +11,6 @@ public class LoginController extends SceneController {
     @FXML private TextField tfdNombre;
     @FXML private Button btnNuevoUsuario;
     @FXML private PasswordField pfdPassword;
-
     
     @FXML
     void initialize(){

@@ -13,8 +13,9 @@ public class Usuario implements Serializable{
     protected String nombre;
     protected String password;
     protected Integer id;
-    protected List<Creador> suscripciones; //List //ListProperty<Creador>
+    protected List<Creador> suscripciones;
     protected ListaEtiquetas preferencias;
+    protected List<Contenido> historial;
 
     public Usuario(int id, String nombre, String password){
         this.id = id;
@@ -22,13 +23,7 @@ public class Usuario implements Serializable{
         this.password = password;
         this.suscripciones =  new ArrayList<>();
         this.preferencias = new ListaEtiquetas();
-    }
-
-    public void listarSuscripciones(){
-        System.out.println("Suscripciones de " + nombre + ":");
-
-        for (Creador cr : suscripciones)
-            System.out.println(cr.getNombre() + "(" + cr + ")");
+        this.historial = new ArrayList<>();
     }
 
     /**
@@ -68,4 +63,5 @@ public class Usuario implements Serializable{
     public int getId(){ return id; }
     public ListaEtiquetas getPreferencias() { return preferencias; }
     public List<Creador> getSuscripciones() { return suscripciones; }
+    public List<Contenido> getHistorial() { return historial; }
 }

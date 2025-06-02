@@ -37,7 +37,7 @@ public class AdministradorContenido extends DataBaseIncremental<Contenido> {
         if(!contentDir.exists()) contentDir.mkdirs();
     }
     
-    public Contenido addContenido(String mediaPath, String nombre, Creador creador, int tipoContenido, List<Etiqueta> etiquetas) throws IOException, RutaInvalidaException{
+    public Contenido addContenido(String mediaPath, String nombre, Creador creador, int tipoContenido, List<Etiqueta> etiquetas) throws IOException, FileNotFoundException{
         String newPath = agregarMediaFile(mediaPath, nombre);
 
         return this.addElemento(newPath, nombre, creador, tipoContenido, new ListaEtiquetas(etiquetas));
@@ -52,33 +52,23 @@ public class AdministradorContenido extends DataBaseIncremental<Contenido> {
         
         Contenido nuevoContenido = null;
 
-        switch(tipoContenido){
-            case 0: // VIDEO
-            //     nuevoContenido = new Consumidor(i, nombre, password); break;
-            // case 1: // AUDIO
-            //     nuevoContenido = new Creador(i, nombre, password); break;
-            // case 2: // PODCAST
-            //     nuevoContenido = new Administrador(i, nombre, password); break;
-            default: // TODO
-                try {
-                    nuevoContenido = new Contenido(id, mediaPath, nombre, creador, etiquetas);
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                }
+        try {
+            nuevoContenido = new Contenido(id, mediaPath, nombre, tipoContenido, creador, etiquetas);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
 
         return nuevoContenido;
     }
 
-    private String agregarMediaFile(String mediaPath, String nombre) throws IOException,RutaInvalidaException{
+    private String agregarMediaFile(String mediaPath, String nombre) throws IOException, FileNotFoundException{
         String newPath = carpetaContenidos + File.separator + nombre;
 
-        try {
-            Path dest = Paths.get(newPath); //comprobar si es una ruta válida
+        // try {
             FileHandling.copiaRecursiva(mediaPath, newPath);
-        } catch (InvalidPathException | FileNotFoundException e){
-            throw new RutaInvalidaException();
-        }
+        // } catch (InvalidPathException | FileNotFoundException e){
+        //     throw new RutaInvalidaException();
+        // }
         
         return newPath;
     }

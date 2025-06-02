@@ -1,14 +1,27 @@
 package controllers;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+
+import org.jaudiotagger.audio.AudioFile;
+import org.jaudiotagger.audio.AudioFileIO;
+import org.jaudiotagger.audio.exceptions.CannotReadException;
+import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
+import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
+import org.jaudiotagger.tag.Tag;
+import org.jaudiotagger.tag.TagException;
+import org.jaudiotagger.tag.images.Artwork;
 
 import contenidos.Comentario;
 import contenidos.Contenido;
 import contenidos.PlayList;
 import javafx.collections.FXCollections;
+import javafx.collections.MapChangeListener;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -35,6 +48,7 @@ public class ViewerController extends SceneController{
     @FXML private Button btnEnviarComentario;
     @FXML private Button btnLike;
     @FXML private MediaView Media;
+    @FXML private ImageView imvAlbumArt;
     @FXML private Slider sldMediaProgress;
     @FXML ImageView ibnNext;
     @FXML ImageView ibnPlay;
@@ -109,11 +123,7 @@ public class ViewerController extends SceneController{
 
     private void playContenido(Contenido content){
         // Cerrar el mediaPlayer si está ejecutando algo
-        MediaPlayer player = Media.getMediaPlayer();
-
-        if(player != null){
-            Media.getMediaPlayer().dispose();
-        }
+        cerrarMediaPlayer();
 
         try {
             content.reloadMedia();
@@ -122,12 +132,21 @@ public class ViewerController extends SceneController{
             e.printStackTrace();
         }
 
-        player = new MediaPlayer(content.getMedia());
+        MediaPlayer player = new MediaPlayer(content.getMedia());
         Media.setMediaPlayer(player);
 
         player.setAutoPlay(true);
 
         player.setVolume(sldVolumen.getValue());
+
+        if(content.getTipoContenido() == 1){ // Si el contenido es audio
+            imvAlbumArt.setVisible(true);
+            // Media.setVisible(false);
+            configureAlbumArt(content);
+        } else {
+            imvAlbumArt.setVisible(false);
+            // Media.setVisible(true);
+        }
 
         lblTitulo.setText(content.getNombre());
         lblAutor.setText(content.getCreador().getNombre());
@@ -142,6 +161,54 @@ public class ViewerController extends SceneController{
         // content.getCreador().listarSuscriptores();
         // user.listarSuscripciones();
         // content.listarVotantes();
+    }
+
+    private void cerrarMediaPlayer(){
+        MediaPlayer player = Media.getMediaPlayer();
+
+        if(player != null){
+            controlador.usuarioVeContenido(user, actualPlayList.contenidoActual(), getFraccionVisto());
+
+            player.dispose();
+        }
+    }
+
+    private void configureAlbumArt(Contenido content) {
+        try{
+            File mp3 = new File(content.getMediaPath());
+            AudioFile audiofile = AudioFileIO.readMagic(mp3);
+            Tag tag = audiofile.getTag();
+            Artwork art = tag.getFirstArtwork();
+
+            if(art != null){
+                byte[] imgData = art.getBinaryData();
+                InputStream is = new ByteArrayInputStream(imgData);
+                Image img = new Image(is);
+                
+                double width = img.getWidth();
+                double height = img.getHeight();
+                double aspectRatio = width / height;
+                // System.out.println("img size: " + width + " x " + height);
+                // Encajar alto o ancho
+                if(width > Media.getFitWidth()){
+                    width = Media.getFitWidth();
+                    height = width / aspectRatio;
+                }
+
+                if(height > Media.getFitHeight()){
+                    height = Media.getFitHeight();
+                    width = aspectRatio * height;
+                }
+
+                imvAlbumArt.setFitWidth(width);
+                imvAlbumArt.setFitHeight(height);
+                imvAlbumArt.setImage(img);
+            } else
+                throw new Exception("");
+        } catch (Exception e){
+            e.printStackTrace();
+            System.out.println("El archivo no tiene art o no se pudo cargar");
+        }
     }
 
     private void initcmbCambiarUsuarios(){
@@ -162,7 +229,12 @@ public class ViewerController extends SceneController{
 
         // Este setOnAction no se ejecuta si se selecciona el mismo elemento que ya estaba
         cmbCambiarUsuario.setOnAction(e -> {
-            System.out.println("Wanna change user huh");
+            admin.cambiarEscena("fxml/LoginView.fxml");
+            // System.out.println("Wanna change user huh");
+        });
+
+        cmbCambiarUsuario.setOnMouseClicked(e -> {
+            admin.cambiarEscena("fxml/LoginView.fxml");
         });
     }
 
@@ -178,7 +250,6 @@ public class ViewerController extends SceneController{
         mediaPlayer.currentTimeProperty().addListener((observale, oldValue, newValue) -> {
             if(!sldMediaProgress.isValueChanging()){ // Si no está siendo manipulado manualmente
                 sldMediaProgress.setValue(newValue.toSeconds());
-                // lblTiempoAvanzado.setText(String.valueOf(newValue.toSeconds()) + " / " + String.valueOf(mediaPlayer.getTotalDuration().toSeconds()));
                 lblTiempoAvanzado.setText(crearStringTiempo(newValue));
             }
         });
@@ -200,21 +271,6 @@ public class ViewerController extends SceneController{
     }
 
     private void updateBtnLike(Contenido content){
-        // btnLike.textProperty().unbind();
-        // btnLike.textProperty().bind(Bindings.createStringBinding(
-        //     () -> String.valueOf(content.getLikes()), content.votantesProperty()
-        // ));
-
-        // btnLike.styleProperty().unbind();
-        // btnLike.styleProperty().bind(Bindings.createStringBinding(() -> {
-        //     return (content.getVotantes().contains(user))?
-        //         "-fx-background-color: lightblue" : "";
-        // }, content.votantesProperty()));
-
-        // btnLike.setText(String.valueOf(content.getLikes()));
-        // btnLike.setStyle((content.getVotantes().contains(user))?
-        //         "-fx-background-color: lightblue" : "");
-
         btnLike.setText(String.valueOf(content.getLikes()));
 
         if(content.getVotantes().contains(user)){
@@ -225,29 +281,6 @@ public class ViewerController extends SceneController{
     }
 
     private void updateBtnSuscribir(Contenido content){
-        // if(!user.suscritoACreador(content.getCreador())){
-        //     btnSubscribir.setText("Suscrito");
-        //     btnSubscribir.setStyle("-fx-background-color: lightblue");
-        // } else {
-        //     btnSubscribir.setText("Suscribirme");   
-        // }
-
-        // btnSubscribir.setText((
-        //     !user.suscritoACreador(content.getCreador()))? "Suscribirme" : "Suscrito"
-        // );
-
-        // btnSubscribir.styleProperty().unbind();
-        // btnSubscribir.styleProperty().bind(Bindings.createStringBinding(() -> {
-        //     return (user.suscritoACreador(content.getCreador()))?
-        //         "-fx-background-color: lightblue" : "";
-        // }, user.suscripcionesProperty()));
-
-        // btnSubscribir.textProperty().unbind();
-        // btnSubscribir.textProperty().bind(Bindings.createStringBinding(() -> {
-        //     return (user.suscritoACreador(content.getCreador()))?
-        //         "Suscrito" : "Suscribirme";
-        // }, user.suscripcionesProperty()));
-
         if(user.suscritoACreador(content.getCreador())){
             btnSubscribir.setText("Suscrito");
             btnSubscribir.setStyle("-fx-background-color: lightblue");
@@ -280,8 +313,8 @@ public class ViewerController extends SceneController{
     }
 
     @FXML private void initIbnNext(MouseEvent evt){
-        System.out.println("next");
         if(!actualPlayList.finPlaylist()){
+            // controlador.usuarioVeContenido(user, actualPlayList.contenidoActual(), getFraccionVisto());
             playContenido(actualPlayList.siguiente());
         } else {
             //TODO
@@ -289,8 +322,9 @@ public class ViewerController extends SceneController{
     }
 
     @FXML private void initIbnPrev(MouseEvent evt){
-        System.out.println("prev");
         if(!actualPlayList.inicioPlayList()){
+            // controlador.usuarioVeContenido(user, actualPlayList.contenidoActual(), getFraccionVisto());
+            cerrarMediaPlayer();
             playContenido(actualPlayList.anterior());
         } else {
             // TODO
@@ -343,4 +377,40 @@ public class ViewerController extends SceneController{
 
         boxComentarios.getChildren().add(box);
     }
+
+    public double getFraccionVisto(){
+        return Media.getMediaPlayer().getCurrentTime().toSeconds() / Media.getMediaPlayer().getTotalDuration().toSeconds();
+    }
+
+    
+
+    // public Image getVideoThumbnail(String videoPath) {
+    //     Media media = new Media(videoPath);
+    //     MediaPlayer mediaPlayer = new MediaPlayer(media);
+    //     MediaView mediaView = new MediaView(mediaPlayer);
+        
+    //     final Image[] result = new Image[1];
+        
+    //     mediaPlayer.setOnReady(() -> {
+    //         mediaView.setFitWidth(media.getWidth());
+    //         mediaView.setFitHeight(media.getHeight());
+    //         result[0] = mediaView.snapshot(null, null);
+    //         mediaPlayer.stop();
+    //         mediaPlayer.dispose();
+    //     });
+        
+    //     mediaPlayer.setCycleCount(1);
+    //     mediaPlayer.play();
+        
+    //     // Esperar hasta que la imagen esté lista (esto es simplificado)
+    //     while (result[0] == null) {
+    //         try {
+    //             Thread.sleep(100);
+    //         } catch (InterruptedException e) {
+    //             e.printStackTrace();
+    //         }
+    //     }
+        
+    //     return result[0];
+    // }
 }

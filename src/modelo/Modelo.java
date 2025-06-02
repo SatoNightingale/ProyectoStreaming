@@ -12,7 +12,6 @@ import java.util.List;
 
 import contenidos.Contenido;
 import contenidos.Etiqueta;
-import controllers.ViewerController;
 import exceptions.RutaInvalidaException;
 import users.Creador;
 import users.Usuario;
@@ -55,7 +54,7 @@ public class Modelo implements Serializable{
 
 
 
-    public Contenido addContenido(String mediaPath, String nombre, Creador creador, int tipoContenido, List<Etiqueta> etiquetas) throws IOException, RutaInvalidaException{
+    public Contenido addContenido(String mediaPath, String nombre, Creador creador, int tipoContenido, List<Etiqueta> etiquetas) throws IOException, FileNotFoundException{
         return adminContenidos.addContenido(mediaPath, nombre, creador, tipoContenido, etiquetas);
     }
 
@@ -90,48 +89,6 @@ public class Modelo implements Serializable{
 
         return modelo;
     }
-
-    // public void cargarBasesDatos(){
-    //     File usersDBFile = new File("usuariosDB.bin");
-    //     File contenidosDBFile = new File("contenidosDB.bin");
-
-    //     try {
-    //         if(!usersDBFile.exists() || !contenidosDBFile.exists())
-    //             throw new DatabasesNoEncontradasException();
-
-    //         intentarLeerDatos(usersDBFile, contenidosDBFile);
-
-    //     } catch (DatabasesNoEncontradasException | InvalidClassException e) {
-    //         if(usersDBFile.exists())
-    //             usersDBFile.delete();
-    //         if(contenidosDBFile.exists())
-    //             contenidosDBFile.delete();
-
-    //         this.adminUsuarios = new AdministradorUsuarios();
-    //         this.adminContenidos = new AdministradorContenido();
-    //     } catch (ClassNotFoundException | IOException e) {
-    //         // TODO Auto-generated catch block
-    //         e.printStackTrace();
-    //     }
-    // }
-
-    // private void intentarLeerDatos(File userDBFile, File contentDBFile) throws FileNotFoundException, IOException, ClassNotFoundException{
-    //     ObjectInputStream inUserDB = new ObjectInputStream(new FileInputStream(userDBFile));
-    //     ObjectInputStream inContentDB = new ObjectInputStream(new FileInputStream(contentDBFile));
-
-    //     adminUsuarios = (AdministradorUsuarios) inUserDB.readObject();
-    //     adminContenidos = (AdministradorContenido) inContentDB.readObject();
-
-    //     // System.out.println("adminUsuarios size at load: " + adminUsuarios.getUsuarios().size());
-    //     // System.out.println("adminContenidos size at load: " + adminContenidos.getContenidos().size());
-
-    //     adminUsuarios.listarUsuarios();
-    //     adminContenidos.listarContenidos();
-
-    //     inUserDB.close();
-    //     inContentDB.close();
-    // }
-
     
     public void guardarDatos() throws FileNotFoundException, IOException{
         ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream("data.bin"));
