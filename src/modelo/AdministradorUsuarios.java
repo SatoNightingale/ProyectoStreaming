@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Optional;
 
 import users.Administrador;
-import users.Consumidor;
 import users.Creador;
 import users.Usuario;
 
@@ -23,13 +22,11 @@ public class AdministradorUsuarios extends DataBaseIncremental<Usuario> {
         Usuario nuevoUsuario;
 
         switch(tipoUsuario){
-            case 0: //CONSUMIDOR
-                nuevoUsuario = new Consumidor(id, nombre, password); break;
             case 1: //PROVEEDOR
                 nuevoUsuario = new Creador(id, nombre, password); break;
             case 2: //ADMINISTRADOR
                 nuevoUsuario = new Administrador(id, nombre, password); break;
-            default: // TODO
+            default:
                 nuevoUsuario = new Usuario(id, nombre, password);
         }
 
@@ -59,25 +56,6 @@ public class AdministradorUsuarios extends DataBaseIncremental<Usuario> {
         return opt.isPresent()? opt.get() : null;
     }
 
-    // public Usuario getUsuario(int id){
-    //     return mapaElementos.get(id);
-    // }
-
-    // Aquí hay que especificar métodos personalizados de serialización y deserialización para cargar las propiedades de javafx, que no son serializables
-    // private void writeObject(ObjectOutputStream out) throws IOException{
-    //     out.defaultWriteObject();
-
-    //     Map<Integer, Usuario> mapaBackup = new HashMap<>(mapaElementos);
-    //     out.writeObject(mapaBackup);
-    // }
-
-    // private void readObject(ObjectInputStream in) throws ClassNotFoundException, IOException{
-    //     in.defaultReadObject();
-    //     @SuppressWarnings("unchecked")
-    //     Map<Integer, Usuario> mapaBackup = (Map<Integer, Usuario>) in.readObject();
-    //     mapaElementos = FXCollections.observableMap(mapaBackup);
-    // }
-
     public void listarUsuarios(){
         for (Usuario user : getUsuarios()) {
             System.out.println(user.getNombre() + "(" + user + ")");
@@ -86,7 +64,5 @@ public class AdministradorUsuarios extends DataBaseIncremental<Usuario> {
 
     public String getAdminPassword(){ return adminPassword; }
 
-    // public Map<Integer, Usuario> getMapaUsuarios(){ return (Map<Integer, Usuario>) mapaElementos; }
     public List<Usuario> getUsuarios(){ return mapaElementos.values().stream().toList(); }
-    // public ObservableMap<Integer, Usuario> mapaUsuariosProperty(){ return mapaElementos; }
 }

@@ -1,25 +1,15 @@
 package controllers;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-
-import org.jaudiotagger.audio.AudioFile;
-import org.jaudiotagger.audio.AudioFileIO;
-import org.jaudiotagger.audio.exceptions.CannotReadException;
-import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
-import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
-import org.jaudiotagger.tag.Tag;
-import org.jaudiotagger.tag.TagException;
-import org.jaudiotagger.tag.images.Artwork;
-
 import contenidos.Comentario;
 import contenidos.Contenido;
 import contenidos.PlayList;
+import users.Administrador;
+import users.Creador;
+import users.Usuario;
+import utils.MediaPreviewExtractor;
 import javafx.collections.FXCollections;
-import javafx.collections.MapChangeListener;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
@@ -36,7 +26,7 @@ import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.util.Duration;
 import javafx.scene.media.MediaPlayer.Status;
-import users.Usuario;
+
 
 public class ViewerController extends SceneController{
     @FXML private VBox panelContenido;
@@ -68,7 +58,7 @@ public class ViewerController extends SceneController{
     @FXML private VBox boxBtnComentarios;
     @FXML private Label lblUltimoComentario;
 
-    private Usuario user;
+    private Usuario usuarioActual;
     private PlayList actualPlayList;
 
     @FXML
@@ -77,18 +67,19 @@ public class ViewerController extends SceneController{
         mediaZone.setOnMouseExited(e -> panelMediaControl.setVisible(false));
 
         btnLike.setOnAction(e -> {
-            controlador.usuarioTocaLike(user, actualPlayList.contenidoActual());
+            controlador.usuarioTocaLike(usuarioActual, actualPlayList.contenidoActual());
             updateBtnLike(actualPlayList.contenidoActual());
         });
 
         btnSubscribir.setOnAction(e -> {
-            controlador.usuarioTocaSuscribir(user, actualPlayList.contenidoActual().getCreador());
+            controlador.usuarioTocaSuscribir(usuarioActual, actualPlayList.contenidoActual().getCreador());
             updateBtnSuscribir(actualPlayList.contenidoActual());
         });
 
         btnEnviarComentario.setOnAction(e -> {
-            controlador.usuarioComenta(user, actualPlayList.contenidoActual(), tfdComentario.getText());
+            controlador.usuarioComenta(this, usuarioActual, actualPlayList.contenidoActual(), tfdComentario.getText());
             updateLblComentarios();
+            tfdComentario.setText("");
         });
 
         sldVolumen.valueProperty().addListener((observable, oldValue, newValue) -> 
@@ -103,16 +94,32 @@ public class ViewerController extends SceneController{
             panelComentarios.setVisible(false);
             panelContenido.setVisible(true);
         });
+
+        btnPostContent.setOnAction(e -> {
+            try {
+                controlador.prepararVistaPostContent((Creador) usuarioActual);
+                cerrarMediaPlayer();
+            } catch (IOException ex) {
+                // TODO Auto-generated catch block
+                ex.printStackTrace();
+            }
+        });
     }
 
     /** Este método se llama cuando se carga la pantalla del visor, ya sea por primera vez o porque hayan cambiado a esta
      * @param user El usuario que está usando la aplicación
      */
     public void init(Usuario user, PlayList recomendaciones){
-        this.user = user;
+        this.usuarioActual = user;
         this.actualPlayList = recomendaciones;
 
         initcmbCambiarUsuarios();
+
+        if(usuarioActual instanceof Creador)
+            btnPostContent.setVisible(true);
+        
+        if(usuarioActual instanceof Administrador)
+            btnAdministrar.setVisible(true);
 
         if(!actualPlayList.finPlaylist()){
             Contenido content = actualPlayList.contenidoActual();
@@ -141,11 +148,11 @@ public class ViewerController extends SceneController{
 
         if(content.getTipoContenido() == 1){ // Si el contenido es audio
             imvAlbumArt.setVisible(true);
-            // Media.setVisible(false);
+            Media.setVisible(false);
             configureAlbumArt(content);
         } else {
             imvAlbumArt.setVisible(false);
-            // Media.setVisible(true);
+            Media.setVisible(true);
         }
 
         lblTitulo.setText(content.getNombre());
@@ -157,17 +164,13 @@ public class ViewerController extends SceneController{
         initProgressSlider();
 
         reconstruirComentarios(content);
-
-        // content.getCreador().listarSuscriptores();
-        // user.listarSuscripciones();
-        // content.listarVotantes();
     }
 
-    private void cerrarMediaPlayer(){
+    public void cerrarMediaPlayer(){
         MediaPlayer player = Media.getMediaPlayer();
 
         if(player != null){
-            controlador.usuarioVeContenido(user, actualPlayList.contenidoActual(), getFraccionVisto());
+            controlador.usuarioVeContenido(usuarioActual, actualPlayList.contenidoActual(), getFraccionVisto());
 
             player.dispose();
         }
@@ -175,34 +178,10 @@ public class ViewerController extends SceneController{
 
     private void configureAlbumArt(Contenido content) {
         try{
-            File mp3 = new File(content.getMediaPath());
-            AudioFile audiofile = AudioFileIO.readMagic(mp3);
-            Tag tag = audiofile.getTag();
-            Artwork art = tag.getFirstArtwork();
+            Image img = utils.MediaPreviewExtractor.getAlbumArt(content.getMediaPath());
 
-            if(art != null){
-                byte[] imgData = art.getBinaryData();
-                InputStream is = new ByteArrayInputStream(imgData);
-                Image img = new Image(is);
-                
-                double width = img.getWidth();
-                double height = img.getHeight();
-                double aspectRatio = width / height;
-                // System.out.println("img size: " + width + " x " + height);
-                // Encajar alto o ancho
-                if(width > Media.getFitWidth()){
-                    width = Media.getFitWidth();
-                    height = width / aspectRatio;
-                }
-
-                if(height > Media.getFitHeight()){
-                    height = Media.getFitHeight();
-                    width = aspectRatio * height;
-                }
-
-                imvAlbumArt.setFitWidth(width);
-                imvAlbumArt.setFitHeight(height);
-                imvAlbumArt.setImage(img);
+            if(img != null){
+                MediaPreviewExtractor.setFitImageView(imvAlbumArt, img);
             } else
                 throw new Exception("");
         } catch (Exception e){
@@ -212,30 +191,24 @@ public class ViewerController extends SceneController{
     }
 
     private void initcmbCambiarUsuarios(){
-        // Inicializar los items
-        // cmbCambiarUsuario.itemsProperty().bind(Bindings.createObjectBinding(
-        //     () -> FXCollections.observableArrayList(
-        //         controlador.getAdminUsuarios().mapaUsuariosProperty().values()),
-        //     controlador.getAdminUsuarios().mapaUsuariosProperty()
-        // ));
-
         // Crea el comboBox de cambiar usuario con una lista de nombres de todos los usuarios
         // También podría usar controlador.getModelo().getUsuarios(), pero para eso tendría que implementar el toString de Usuario y por cuestiones de debug lo necesito sin implementar
         cmbCambiarUsuario.setItems(FXCollections.observableArrayList(
             controlador.getModelo().getUsuarios().stream().map(Usuario::getNombre).toList()
         ));
 
-        cmbCambiarUsuario.getSelectionModel().select(user.getId());
+        cmbCambiarUsuario.getSelectionModel().select(usuarioActual.getId());
 
         // Este setOnAction no se ejecuta si se selecciona el mismo elemento que ya estaba
         cmbCambiarUsuario.setOnAction(e -> {
             admin.cambiarEscena("fxml/LoginView.fxml");
-            // System.out.println("Wanna change user huh");
+            cerrarMediaPlayer();
+            // System.out.println("Wanna change usuarioActual huh");
         });
 
-        cmbCambiarUsuario.setOnMouseClicked(e -> {
-            admin.cambiarEscena("fxml/LoginView.fxml");
-        });
+        // cmbCambiarUsuario.setOnMouseClicked(e -> {
+        //     admin.cambiarEscena("fxml/LoginView.fxml");
+        // });
     }
 
     private void initProgressSlider(){
@@ -257,23 +230,12 @@ public class ViewerController extends SceneController{
         sldMediaProgress.setOnMousePressed(e -> mediaPlayer.seek(Duration.seconds(sldMediaProgress.getValue())));
         sldMediaProgress.setOnMouseDragged(e -> mediaPlayer.seek(Duration.seconds(sldMediaProgress.getValue())));
         sldMediaProgress.setOnMouseReleased(e -> mediaPlayer.seek(Duration.seconds(sldMediaProgress.getValue())));
-
-        // // Correr el video moviendo el slider
-        // sldMediaProgress.valueChangingProperty().addListener((observable, wasChanging, isValueChanging) -> {
-        //     if(!isValueChanging)
-        //         mediaPlayer.seek(Duration.seconds(sldMediaProgress.getValue())); 
-        // });
-
-        // sldMediaProgress.valueChangingProperty().addListener((observable, wasChanging, isValueChanging) -> {
-        //     if(sldMediaProgress.isValueChanging())
-        //         mediaPlayer.seek(Duration.seconds(sldMediaProgress.getValue())); 
-        // });
     }
 
     private void updateBtnLike(Contenido content){
         btnLike.setText(String.valueOf(content.getLikes()));
 
-        if(content.getVotantes().contains(user)){
+        if(content.getVotantes().contains(usuarioActual)){
             btnLike.setStyle("-fx-background-color: lightblue");
         } else {
             btnLike.setStyle("");
@@ -281,7 +243,7 @@ public class ViewerController extends SceneController{
     }
 
     private void updateBtnSuscribir(Contenido content){
-        if(user.suscritoACreador(content.getCreador())){
+        if(usuarioActual.suscritoACreador(content.getCreador())){
             btnSubscribir.setText("Suscrito");
             btnSubscribir.setStyle("-fx-background-color: lightblue");
         } else {
@@ -314,20 +276,18 @@ public class ViewerController extends SceneController{
 
     @FXML private void initIbnNext(MouseEvent evt){
         if(!actualPlayList.finPlaylist()){
-            // controlador.usuarioVeContenido(user, actualPlayList.contenidoActual(), getFraccionVisto());
             playContenido(actualPlayList.siguiente());
         } else {
-            //TODO
+            playContenido(actualPlayList.reload());
         }
     }
 
     @FXML private void initIbnPrev(MouseEvent evt){
         if(!actualPlayList.inicioPlayList()){
-            // controlador.usuarioVeContenido(user, actualPlayList.contenidoActual(), getFraccionVisto());
             cerrarMediaPlayer();
             playContenido(actualPlayList.anterior());
         } else {
-            // TODO
+            playContenido(actualPlayList.getLast());
         }
     }
 
@@ -381,36 +341,4 @@ public class ViewerController extends SceneController{
     public double getFraccionVisto(){
         return Media.getMediaPlayer().getCurrentTime().toSeconds() / Media.getMediaPlayer().getTotalDuration().toSeconds();
     }
-
-    
-
-    // public Image getVideoThumbnail(String videoPath) {
-    //     Media media = new Media(videoPath);
-    //     MediaPlayer mediaPlayer = new MediaPlayer(media);
-    //     MediaView mediaView = new MediaView(mediaPlayer);
-        
-    //     final Image[] result = new Image[1];
-        
-    //     mediaPlayer.setOnReady(() -> {
-    //         mediaView.setFitWidth(media.getWidth());
-    //         mediaView.setFitHeight(media.getHeight());
-    //         result[0] = mediaView.snapshot(null, null);
-    //         mediaPlayer.stop();
-    //         mediaPlayer.dispose();
-    //     });
-        
-    //     mediaPlayer.setCycleCount(1);
-    //     mediaPlayer.play();
-        
-    //     // Esperar hasta que la imagen esté lista (esto es simplificado)
-    //     while (result[0] == null) {
-    //         try {
-    //             Thread.sleep(100);
-    //         } catch (InterruptedException e) {
-    //             e.printStackTrace();
-    //         }
-    //     }
-        
-    //     return result[0];
-    // }
 }

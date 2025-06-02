@@ -55,7 +55,7 @@
          <children>
             <VBox fx:id="panelContenido" alignment="CENTER" spacing="3.0">
                <children>
-                  <StackPane fx:id="mediaZone" VBox.vgrow="ALWAYS">
+                  <StackPane fx:id="mediaZone" style="-fx-background-color: black;" VBox.vgrow="ALWAYS">
                      <children>
                         <ImageView fx:id="imvAlbumArt" fitHeight="300.0" fitWidth="400.0" pickOnBounds="true" preserveRatio="true" />
                         <MediaView fx:id="Media" fitHeight="300.0" fitWidth="400.0" />

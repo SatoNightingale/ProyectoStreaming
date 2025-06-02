@@ -16,10 +16,9 @@ import contenidos.*;
 import exceptions.RutaInvalidaException;
 
 public class MainController extends Application {
-    // private AdministradorUsuarios adminUsuarios;
-    // private AdministradorContenido adminContenidos;
     private Modelo modelo;
     private AdministradorEscena adminEscena;
+    private Usuario usuario;
 
     public static void main(String[] args) throws Exception {
         launch(args);
@@ -35,6 +34,8 @@ public class MainController extends Application {
             inicializarSimulador();
         }
         
+        usuario = null;
+
         primaryStage.setOnCloseRequest(this::intentarGuardarDatos);
         
         adminEscena.cambiarEscena("fxml/LoginView.fxml");
@@ -75,7 +76,6 @@ public class MainController extends Application {
                 1,
                 Arrays.asList(new Etiqueta("Música", 3), new Etiqueta("Violín", 5), new Etiqueta("Electrónica", 5)));
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -84,7 +84,8 @@ public class MainController extends Application {
         Usuario user = modelo.getUsuario(nombre, password);
         
         if(user != null){
-            prepararVista(user);
+            usuario = user;
+            prepararVistaContenido(user);
         } else{
             throw new Exception("Usuario no encontrado"); //TODO
         }
@@ -94,18 +95,30 @@ public class MainController extends Application {
         if(modelo.validarNuevoUsuario(nombre, password, adminPassword)){
             Usuario nuevoUsuario = modelo.addUsuario(nombre, password, tipoCuenta);
 
-            prepararVista(nuevoUsuario);
+            usuario = nuevoUsuario;
+
+            prepararVistaContenido(nuevoUsuario);
         } else {
             throw new Exception("");
         }
     }
 
-    public void prepararVista(Usuario user){
+    public void prepararVistaContenido(Usuario user) throws IOException{
         PlayList recomendaciones = crearPlaylistRecomendaciones(user);
 
-        adminEscena.getVisorController().init(user, recomendaciones);
+        ViewerController vistaContenido = (ViewerController) adminEscena.cargarEscena("fxml/VistaContenido.fxml");
+
+        vistaContenido.init(user, recomendaciones);
 
         adminEscena.cambiarEscena("fxml/VistaContenido.fxml");
+    }
+
+    public void prepararVistaPostContent(Creador creador) throws IOException{
+        PostContenidoController controlador = (PostContenidoController) adminEscena.cargarEscena("fxml/PostContenidoView.fxml");
+
+        controlador.init(creador);
+        
+        adminEscena.cambiarEscena("fxml/PostContenidoView.fxml");
     }
 
     /** Cuando el usuario termina de ver este contenido (o sea, pasa para otra cosa) se actualizan sus preferencias y las etiquetas del contenido. Según la fracción del contenido que haya visto, se suman a las preferencias del usuario las etiquetas del contenido multiplicadas por esta fracción, y viceversa, sus preferencias se suman a las etiquetas del contenido multiplicadas por la misma fracción, pero en una escala cuatro veces menor. Así, por ejemplo, si el usuario ve la mitad del video, se añaden a sus etiquetas las mismas etiquetas del contenido pero con la mitad de su peso; y al contenido se le añade solo la octava parte de las etiquetas del usuario. Además, se actualiza el promedio de tiempo que este video es reproducido globalmente
@@ -206,10 +219,10 @@ public class MainController extends Application {
         autor.getContenidosSubidos().remove(aRetirar);
     }
     
-    public void usuarioComenta(Usuario user, Contenido content, String texto){
+    public void usuarioComenta(ViewerController controller, Usuario user, Contenido content, String texto){
         Comentario comentario = new Comentario(user, texto);
         content.getComentarios().add(comentario);
-        adminEscena.getVisorController().addPanelComentario(comentario);
+        controller.addPanelComentario(comentario);
     }
 
     /** Crea una PlayList con recomendaciones de contenido personalizadas para este usuario.
@@ -254,5 +267,15 @@ public class MainController extends Application {
         return mensajeError;
     }
 
+    public static Alert showInfoMessage(String mensaje){
+        Alert mensajeInfo = new Alert(Alert.AlertType.INFORMATION, mensaje, ButtonType.CLOSE);
+
+        mensajeInfo.showAndWait();
+
+        return mensajeInfo;
+    }
+
     public Modelo getModelo(){ return modelo; }
+
+    public Usuario getUsuario(){ return usuario; }
 }

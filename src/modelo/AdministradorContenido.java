@@ -3,34 +3,17 @@ package modelo;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 import contenidos.Contenido;
 import contenidos.Etiqueta;
 import contenidos.ListaEtiquetas;
-import exceptions.RutaInvalidaException;
-import fileHandling.FileHandling;
 import users.*;
+import utils.FileHandling;
 
 public class AdministradorContenido extends DataBaseIncremental<Contenido> {
     private final String carpetaContenidos = "content";
-    // private static final long serialVersionUID = 42L;
-
-    // public enum TipoContenido{
-    //     VIDEO("Video"),
-    //     AUDIO("Audio"),
-    //     PODCAST("Pódcast");
-
-    //     private final String nombre;
-
-    //     TipoContenido(String nombre){ this.nombre = nombre; }
-
-    //     public String toString(){ return nombre; }
-    // }
-
+    
     public AdministradorContenido(){
         File contentDir = new File(carpetaContenidos);
 
@@ -64,11 +47,7 @@ public class AdministradorContenido extends DataBaseIncremental<Contenido> {
     private String agregarMediaFile(String mediaPath, String nombre) throws IOException, FileNotFoundException{
         String newPath = carpetaContenidos + File.separator + nombre;
 
-        // try {
-            FileHandling.copiaRecursiva(mediaPath, newPath);
-        // } catch (InvalidPathException | FileNotFoundException e){
-        //     throw new RutaInvalidaException();
-        // }
+        FileHandling.copiaRecursiva(mediaPath, newPath);
         
         return newPath;
     }
@@ -78,23 +57,6 @@ public class AdministradorContenido extends DataBaseIncremental<Contenido> {
             System.out.println(content.getNombre() + "(" + content + ")");
         }
     }
-
-    // private void writeObject(ObjectOutputStream out) throws IOException{
-    //     // super.writeObject(out);
-    //     out.defaultWriteObject();
-    //     Map<Integer, Contenido> mapaBackup = new HashMap<>(mapaElementos);
-    //     out.writeObject(mapaBackup);
-    // }
-
-    // private void readObject(ObjectInputStream in) throws ClassNotFoundException, IOException{
-    //     // super.readObject(in);
-    //     in.defaultReadObject();
-    //     @SuppressWarnings("unchecked")
-    //     Map<Integer, Contenido> mapaBackup = (Map<Integer, Contenido>) in.readObject();
-    //     mapaElementos = FXCollections.observableMap(mapaBackup);
-
-    //     for (Contenido c : mapaElementos.values()) c.reloadMedia();
-    // }
 
     public List<Contenido> getContenidos(){ return mapaElementos.values().stream().toList(); }
 }

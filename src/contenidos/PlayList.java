@@ -27,6 +27,16 @@ public class PlayList {
         return listaContenidos.get(actual);
     }
 
+    public Contenido reload(){
+        actual = 0;
+        return listaContenidos.get(actual);
+    }
+
+    public Contenido getLast(){
+        actual = listaContenidos.size() - 1;
+        return listaContenidos.get(actual);
+    }
+
     /**
      * @return True si este es el último elemento de la playlist, false de lo contrario
      */

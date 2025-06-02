@@ -9,46 +9,53 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 public class AdministradorEscena {
-    private MainController controladorPrincipal;
+    private MainController controlador;
 
     private Stage stage;
-    private Map<String, SceneController> sceneMap;
-
-    private ViewerController contentViewerController;
+    private Map<String, SceneController> mapaEscenas;
 
     public AdministradorEscena(Stage primaryStage, MainController mainCon) throws IOException{
-        this.controladorPrincipal = mainCon;
+        this.controlador = mainCon;
         this.stage = primaryStage;
-        sceneMap = new HashMap<>();
-
-        contentViewerController = (ViewerController) cargarEscena("fxml/VistaContenido.fxml");
+        mapaEscenas = new HashMap<>();
     }
 
-    private SceneController cargarEscena(String ruta) throws IOException{
+    public SceneController cargarEscena(String ruta) throws IOException{
         FXMLLoader loader = new FXMLLoader(getClass().getResource(ruta));
         
         Scene s = new Scene(loader.load());
         SceneController sc = loader.getController();
-        sc.setParents(controladorPrincipal, this);
+        sc.setParents(controlador, this);
         sc.setScene(s);
         
-        sceneMap.put(ruta, sc);
+        mapaEscenas.put(ruta, sc);
 
         return sc;
     }
 
     public void cambiarEscena(String nombreEscena) {
         try{
-            if(!sceneMap.containsKey(nombreEscena))
+            if(!mapaEscenas.containsKey(nombreEscena))
                 cargarEscena(nombreEscena);
 
-            stage.setScene(sceneMap.get(nombreEscena).getScene());
+            SceneController sc = mapaEscenas.get(nombreEscena);
+            sc.setUsuario(controlador.getUsuario());
+
+            stage.setScene(sc.getScene());
         } catch(IOException e){
-            MainController.showErrorMessage("No se pudo cargar la escena " + e.getMessage());
+            MainController.showErrorMessage("No se pudo cargar la escena " + nombreEscena);
 
             e.printStackTrace();
         }
     }
 
-    public ViewerController getVisorController(){ return contentViewerController; }
+    public Stage getStage(){ return stage; }
+
+    public SceneController getSceneController(String ruta){
+        if(mapaEscenas.containsKey(ruta)){
+            return mapaEscenas.get(ruta);
+        } else {
+            return null;
+        }
+    }
 }
