@@ -1,7 +1,6 @@
 package controllers;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import contenidos.Comentario;
 import contenidos.Contenido;
 import contenidos.PlayList;
@@ -96,30 +95,31 @@ public class ViewerController extends SceneController{
         });
 
         btnPostContent.setOnAction(e -> {
-            try {
-                controlador.prepararVistaPostContent((Creador) usuarioActual);
-                cerrarMediaPlayer();
-            } catch (IOException ex) {
-                // TODO Auto-generated catch block
-                ex.printStackTrace();
-            }
+            admin.cambiarEscena("fxml/PostContenidoView.fxml");
+            // controlador.prepararVistaPostContent((Creador) usuarioActual);
+            cerrarMediaPlayer();
+        });
+
+        btnEditarPerfil.setOnAction(e -> {
+            admin.cambiarEscena("fxml/EditarPerfilView.fxml");
         });
     }
 
     /** Este método se llama cuando se carga la pantalla del visor, ya sea por primera vez o porque hayan cambiado a esta
      * @param user El usuario que está usando la aplicación
      */
-    public void init(Usuario user, PlayList recomendaciones){
+    public void init(Usuario user, Object...data){
         this.usuarioActual = user;
-        this.actualPlayList = recomendaciones;
 
+        if(data.length != 0){
+            PlayList recomendaciones = (PlayList) data[0];
+            this.actualPlayList = recomendaciones;
+        }
+        
         initcmbCambiarUsuarios();
 
-        if(usuarioActual instanceof Creador)
-            btnPostContent.setVisible(true);
-        
-        if(usuarioActual instanceof Administrador)
-            btnAdministrar.setVisible(true);
+        btnPostContent.setVisible(usuarioActual instanceof Creador);
+        btnAdministrar.setVisible(usuarioActual instanceof Administrador);
 
         if(!actualPlayList.finPlaylist()){
             Contenido content = actualPlayList.contenidoActual();

@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javafx.scene.media.Media;
-
 import users.*;
 
 public class Contenido implements Serializable{

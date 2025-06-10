@@ -33,13 +33,13 @@ public class AdministradorEscena {
         return sc;
     }
 
-    public void cambiarEscena(String nombreEscena) {
+    public void cambiarEscena(String nombreEscena, Object...data) {
         try{
             if(!mapaEscenas.containsKey(nombreEscena))
                 cargarEscena(nombreEscena);
 
             SceneController sc = mapaEscenas.get(nombreEscena);
-            sc.setUsuario(controlador.getUsuario());
+            sc.init(controlador.getUsuario(), data);
 
             stage.setScene(sc.getScene());
         } catch(IOException e){

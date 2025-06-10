@@ -2,7 +2,7 @@ package controllers;
 import javafx.scene.Scene;
 import users.Usuario;
 
-public class SceneController {
+public abstract class SceneController {
     protected Scene escena;
     protected MainController controlador;
     protected AdministradorEscena admin;
@@ -15,7 +15,9 @@ public class SceneController {
         this.admin = admin;
     }
 
-    public void setUsuario(Usuario usuario){ this.usuario = usuario; }
+    // public void setUsuario(Usuario usuario){ this.usuario = usuario; }
+
+    public abstract void init(Usuario usuario, Object...data);
 
     public void setScene(Scene escena){ this.escena = escena; }
     public Scene getScene(){ return escena; }

@@ -8,6 +8,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import users.Usuario;
 
 public class NuevoUsuarioController extends SceneController {
     @FXML private PasswordField pfdAdminPassword;
@@ -33,6 +34,8 @@ public class NuevoUsuarioController extends SceneController {
             tfdNombre.textProperty())
         );
     }
+
+    public void init(Usuario user, Object...data){}
 
     private boolean validarCampos(){
         return cmbTipoCuenta.getSelectionModel().getSelectedIndex() != -1 &&

@@ -5,6 +5,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import users.Usuario;
 
 public class LoginController extends SceneController {
     @FXML private Button btnEnter;
@@ -13,10 +14,12 @@ public class LoginController extends SceneController {
     @FXML private PasswordField pfdPassword;
     
     @FXML
-    void initialize(){
+    public void initialize(){
         btnEnter.setOnAction(this::enviarPeticionLogin);
         btnNuevoUsuario.setOnAction(e -> admin.cambiarEscena("fxml/NuevoUsuarioView.fxml"));
     }
+
+    public void init(Usuario user, Object...data){}
 
     private boolean validarDatosUsuario(){
         boolean band = false;

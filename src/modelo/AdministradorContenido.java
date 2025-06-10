@@ -22,8 +22,10 @@ public class AdministradorContenido extends DataBaseIncremental<Contenido> {
     
     public Contenido addContenido(String mediaPath, String nombre, Creador creador, int tipoContenido, List<Etiqueta> etiquetas) throws IOException, FileNotFoundException{
         String newPath = agregarMediaFile(mediaPath, nombre);
-
-        return this.addElemento(newPath, nombre, creador, tipoContenido, new ListaEtiquetas(etiquetas));
+        Contenido nuevoContenido = this.addElemento(newPath, nombre, creador, tipoContenido, new ListaEtiquetas(etiquetas));
+        creador.getContenidosSubidos().add(nuevoContenido);
+        
+        return nuevoContenido;
     }
 
     protected Contenido registrarElemento(int id, Object...args)  { //throws FileNotFoundException

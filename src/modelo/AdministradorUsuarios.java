@@ -33,18 +33,18 @@ public class AdministradorUsuarios extends DataBaseIncremental<Usuario> {
         return nuevoUsuario;
     }
 
-    public boolean usuarioExiste(String nombre, String password){
+    public boolean usuarioExiste(String nombre){
         return mapaElementos.values().stream().anyMatch(
-            u -> u.getNombre().equals(nombre) && u.getPassword().equals(password));
+            u -> u.getNombre().equals(nombre));
     }
 
-    public boolean validarNuevoUsuario(String nombre, String password, String adminPassword){
+    public boolean validarNuevoUsuario(String nombre, String password, String adminPassword, boolean comoAdmin){
         return
             !nombre.isEmpty() &&
             !password.isEmpty() &&
-            !usuarioExiste(nombre, password) && (
-                adminPassword.equals(this.adminPassword) || 
-                adminPassword.equals("")
+            !usuarioExiste(nombre) && (
+                // Si el nuevo usuario va a ser un administrador, tiene que tener bien la contraseña de admin
+                adminPassword.equals(this.adminPassword) || !comoAdmin
             );
     }
 
@@ -54,6 +54,11 @@ public class AdministradorUsuarios extends DataBaseIncremental<Usuario> {
         ).findFirst();
 
         return opt.isPresent()? opt.get() : null;
+    }
+
+    public void cambiarDatosUsuario(Usuario user, String nuevoNombre, String nuevaPassword){
+        user.setNombre(nuevoNombre);
+        user.setPassword(nuevaPassword);
     }
 
     public void listarUsuarios(){

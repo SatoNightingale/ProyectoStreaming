@@ -4,8 +4,8 @@
 <?import javafx.scene.control.Accordion?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.PasswordField?>
-<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.image.Image?>
@@ -27,9 +27,9 @@
          <children>
             <AnchorPane>
                <children>
-                  <Button mnemonicParsing="false" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+                  <Button fx:id="btnAtras" mnemonicParsing="false" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
                      <graphic>
-                        <ImageView fx:id="btnAtras" fitHeight="25.0" fitWidth="25.0">
+                        <ImageView fitHeight="25.0" fitWidth="25.0">
                            <image>
                               <Image url="@../../resources/ic_action_back.png" />
                            </image>
@@ -55,18 +55,17 @@
                            </font>
                         </Label>
                         <Label text="Nombre:" GridPane.rowIndex="1" />
-                        <TextField fx:id="tfdNombre" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                        <TextField fx:id="tfdNombre" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                         <Label text="Contraseña:" GridPane.rowIndex="2" />
                         <Button fx:id="btnBorrarCuenta" mnemonicParsing="false" style="-fx-background-color: red;" text="Borrar cuenta" GridPane.columnIndex="2" GridPane.halignment="RIGHT" GridPane.rowIndex="3">
                            <GridPane.margin>
                               <Insets />
                            </GridPane.margin>
                         </Button>
-                        <PasswordField fx:id="pfdPassword" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                        <PasswordField fx:id="pfdPassword" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                         <Button fx:id="btnModificarDatos" mnemonicParsing="false" text="Modificar datos" GridPane.columnIndex="2" GridPane.halignment="RIGHT" GridPane.rowIndex="1" />
                         <Label text="Nueva contraseña:" GridPane.rowIndex="3" />
-                        <PasswordField fx:id="pfdNewPassword" disable="true" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                        <Button fx:id="btnGuardarDatos" alignment="CENTER" mnemonicParsing="false" text="Guardar" visible="false" GridPane.columnIndex="2" GridPane.halignment="RIGHT" GridPane.rowIndex="2" />
+                        <PasswordField fx:id="pfdNewPassword" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                      </children>
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
@@ -78,20 +77,12 @@
               <panes>
                 <TitledPane animated="false" text="Historial">
                      <content>
-                        <ScrollPane fitToWidth="true" hbarPolicy="NEVER">
-                           <content>
-                              <VBox fx:id="panelHistorial" spacing="5.0" />
-                           </content>
-                        </ScrollPane>
+                        <ListView fx:id="lstHistorial" />
                      </content>
                 </TitledPane>
                 <TitledPane fx:id="paneMiContenido" animated="false" disable="true" expanded="false" text="Mi contenido">
                      <content>
-                        <ScrollPane fitToHeight="true" fitToWidth="true">
-                           <content>
-                              <VBox fx:id="boxMiContenido" spacing="5.0" />
-                           </content>
-                        </ScrollPane>
+                        <ListView fx:id="lstMiContenido" />
                      </content>
                 </TitledPane>
               </panes>
@@ -105,11 +96,7 @@
                   <Font size="16.0" />
                </font>
             </Label>
-            <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS">
-               <content>
-                  <VBox fx:id="boxSuscripciones" spacing="5.0" />
-               </content>
-            </ScrollPane>
+            <ListView fx:id="lstSuscripciones" VBox.vgrow="ALWAYS" />
          </children>
          <padding>
             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />

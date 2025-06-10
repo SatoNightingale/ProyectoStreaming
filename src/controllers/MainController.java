@@ -2,6 +2,7 @@ package controllers;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.InvalidPathException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -13,7 +14,6 @@ import javafx.stage.WindowEvent;
 import modelo.Modelo;
 import users.*;
 import contenidos.*;
-import exceptions.RutaInvalidaException;
 
 public class MainController extends Application {
     private Modelo modelo;
@@ -92,7 +92,7 @@ public class MainController extends Application {
     }
 
     public void nuevoUsuario(String nombre, String password, String adminPassword, int tipoCuenta) throws Exception{
-        if(modelo.validarNuevoUsuario(nombre, password, adminPassword)){
+        if(modelo.validarNuevoUsuario(nombre, password, adminPassword, tipoCuenta == 2)){
             Usuario nuevoUsuario = modelo.addUsuario(nombre, password, tipoCuenta);
 
             usuario = nuevoUsuario;
@@ -105,21 +105,9 @@ public class MainController extends Application {
 
     public void prepararVistaContenido(Usuario user) throws IOException{
         PlayList recomendaciones = crearPlaylistRecomendaciones(user);
-
-        ViewerController vistaContenido = (ViewerController) adminEscena.cargarEscena("fxml/VistaContenido.fxml");
-
-        vistaContenido.init(user, recomendaciones);
-
-        adminEscena.cambiarEscena("fxml/VistaContenido.fxml");
+        adminEscena.cambiarEscena("fxml/VistaContenido.fxml", recomendaciones);
     }
 
-    public void prepararVistaPostContent(Creador creador) throws IOException{
-        PostContenidoController controlador = (PostContenidoController) adminEscena.cargarEscena("fxml/PostContenidoView.fxml");
-
-        controlador.init(creador);
-        
-        adminEscena.cambiarEscena("fxml/PostContenidoView.fxml");
-    }
 
     /** Cuando el usuario termina de ver este contenido (o sea, pasa para otra cosa) se actualizan sus preferencias y las etiquetas del contenido. Según la fracción del contenido que haya visto, se suman a las preferencias del usuario las etiquetas del contenido multiplicadas por esta fracción, y viceversa, sus preferencias se suman a las etiquetas del contenido multiplicadas por la misma fracción, pero en una escala cuatro veces menor. Así, por ejemplo, si el usuario ve la mitad del video, se añaden a sus etiquetas las mismas etiquetas del contenido pero con la mitad de su peso; y al contenido se le añade solo la octava parte de las etiquetas del usuario. Además, se actualiza el promedio de tiempo que este video es reproducido globalmente
      * @param user El usuario que va a actualizar
@@ -139,6 +127,8 @@ public class MainController extends Application {
         for (Etiqueta etiqueta : etiquetasUsuario) {
             listaEtquietasContenido.actualizarEtiqueta(etiqueta.getNombre(), (etiqueta.getPeso() / fraccionVisto) / 4);
         }
+
+        user.getHistorial().add(content);
 
         content.addReproduccion(fraccionVisto);
     }
@@ -185,18 +175,35 @@ public class MainController extends Application {
         creador.getSuscriptores().remove(user);
     }
 
+    public void cambiarDatosUsuario(Usuario user, String password, String nuevoNombre, String nuevaPassword) throws Exception{
+        if(user.getPassword().equals(password)){
+            if(!modelo.usuarioExiste(nuevoNombre) || user.getNombre().equals(nuevoNombre)){
+                modelo.cambiarDatosUsuario(user, nuevoNombre, nuevaPassword);
+            } else {
+                System.out.println("Un usuario con ese nombre ya existe");
+                // TODO
+            }
+        } else {
+            System.out.println("La contraseña es incorrecta");
+            // TODO
+        }
+    }
+
+    public void eliminarCuenta(Usuario user){
+        
+    }
+
     /**Añade ("sube") un nuevo contenido a la cuenta del creador. Se añaden las etiquetas del contenido subido a los temas del creador, pero tienen menos importancia mientras más contenido haya subido este.
      * @param mediaPath La ruta del archivo (en el disco) del contenido que se va a subir, para importarlo
      * @param nombre El nombre del nuevo contenido
      * @param creador El creador del nuevo contenido
-     * @param tipoContenido El tipo de contenido: puede ser de Video (0), Música (1) o Podcast (2)
+     * @param tipoContenido El tipo de contenido: puede ser de Video (0), o Música (1)
      * @param etiquetas Las etiquetas del contenido a crear
      * @throws IOException Cuando hay un error al leer el archivo
-     * @throws RutaInvalidaException Cuando el archivo no existe, o la ruta provista contiene caracteres no soportados
+     * @throws InvalidPathException Cuando el archivo no existe, o la ruta provista contiene caracteres no soportados
      */
-    public void postearContenido(String mediaPath, String nombre, Creador creador, int tipoContenido, List<Etiqueta> etiquetas) throws IOException, RutaInvalidaException{
+    public void postearContenido(String mediaPath, String nombre, Creador creador, int tipoContenido, List<Etiqueta> etiquetas) throws IOException{
         Contenido nc = modelo.addContenido(mediaPath, nombre, creador, tipoContenido, etiquetas);
-        creador.getContenidosSubidos().add(nc);
         
         int cantContenidos = creador.getContenidosSubidos().size();
         List<Etiqueta> etiquetasContenido = nc.getTags().getList();

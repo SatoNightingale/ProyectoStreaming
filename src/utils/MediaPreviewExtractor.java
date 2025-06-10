@@ -39,9 +39,14 @@ public class MediaPreviewExtractor {
             return null;
     }
 
-	public static void getVideoThumbnail(String videoPath, OnVideoLoadCallback callback) {
+	public static void getVideoThumbnail(String videoPath, OnVideoLoadCallback callback){
 		Media media = new Media(new File(videoPath).toURI().toString());
-		MediaPlayer mediaPlayer = new MediaPlayer(media);
+        getVideoThumbnail(media, callback);
+	}
+
+    public static void getVideoThumbnail(Media mediaVideo, OnVideoLoadCallback callback){
+        // Media media = new Media(new File(videoPath).toURI().toString());
+		MediaPlayer mediaPlayer = new MediaPlayer(mediaVideo);
 		MediaView mediaView = new MediaView(mediaPlayer);
 		
 		mediaPlayer.setOnReady(() -> {
@@ -57,7 +62,7 @@ public class MediaPreviewExtractor {
 		});
 
 		mediaPlayer.play();
-	}
+    }
 
 	public interface OnVideoLoadCallback{
 		public void activate(Image img);

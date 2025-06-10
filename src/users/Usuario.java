@@ -60,6 +60,8 @@ public class Usuario implements Serializable{
 
     public String getNombre(){ return nombre; }
     public String getPassword(){ return password; }
+    public void setNombre(String nombre){ this.nombre = nombre; }
+    public void setPassword(String password){ this.password = password; }
     public int getId(){ return id; }
     public ListaEtiquetas getPreferencias() { return preferencias; }
     public List<Creador> getSuscripciones() { return suscripciones; }

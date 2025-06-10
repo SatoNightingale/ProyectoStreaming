@@ -9,13 +9,14 @@ import java.util.List;
 import contenidos.Etiqueta;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 
 import users.Creador;
+import users.Usuario;
 import utils.MediaPreviewExtractor;
 
 public class PostContenidoController extends SceneController{
@@ -24,12 +25,11 @@ public class PostContenidoController extends SceneController{
     @FXML private ImageView mediaPreview;
     @FXML private TextField tfdEtiquetasContenido;
     @FXML private TextField tfdNombreContenido;
-    @FXML private Text promptView;
+    @FXML private TextField tfdFilePath;
+    @FXML private Label promptView;
 	
-    private Creador creador;
-    private String mediaPath;
     private Image imgPreview;
-    private int tipo;
+    private int tipoContenido;
 
     @FXML
     void initialize(){
@@ -48,16 +48,17 @@ public class PostContenidoController extends SceneController{
         btnPost.setOnAction(e -> post());
     }
 
-    public void init(Creador creador){
-        this.creador = creador;
-        mediaPath = "";
-        tipo = -1;
+    public void init(Usuario user, Object...data){
+        this.usuario = (Creador) user;
+        tipoContenido = -1;
     }
 
     private void post(){
         if(validarPost()){
             List<String> nombresEtiquetas = Arrays.asList(tfdEtiquetasContenido.getText().split(" "));
             List<Etiqueta> listaEtiquetas = new ArrayList<>();
+
+            String mediaPath = tfdFilePath.getText();
 
             for(int i = 0; i < nombresEtiquetas.size(); i++) {
                 listaEtiquetas.add(new Etiqueta(nombresEtiquetas.get(i), nombresEtiquetas.size() - i));
@@ -66,7 +67,7 @@ public class PostContenidoController extends SceneController{
             String nombre = tfdNombreContenido.getText();
 
             try{
-                controlador.postearContenido(mediaPath, nombre, creador, tipo, listaEtiquetas);
+                controlador.postearContenido(mediaPath, nombre, (Creador) usuario, tipoContenido, listaEtiquetas);
                 MainController.showInfoMessage("Su contenido se ha añadido a la plataforma");
                 goBack();
             } catch (Exception ex){
@@ -79,7 +80,11 @@ public class PostContenidoController extends SceneController{
     }
 
     private boolean validarPost(){
-        return !tfdNombreContenido.getText().isEmpty() && !tfdEtiquetasContenido.getText().isEmpty() && !mediaPath.isEmpty() && tipo != -1;
+        File fichero = new File(tfdFilePath.getText());
+
+        //!tfdFilePath.getText().isEmpty() &&
+
+        return fichero.exists() && !tfdNombreContenido.getText().isEmpty() && !tfdEtiquetasContenido.getText().isEmpty() &&  tipoContenido != -1;
     }
 
     private void cargarMediaFile(){
@@ -96,25 +101,29 @@ public class PostContenidoController extends SceneController{
         File f = fileChooser.showOpenDialog(admin.getStage());
 
         if(f != null){
-            String rutaF = f.getAbsolutePath();
-            String extensionF = "*" + rutaF.substring(rutaF.lastIndexOf('.'));
+            String mediaPath = f.getAbsolutePath();
+            String extension = "*" + mediaPath.substring(mediaPath.lastIndexOf('.'));
 
-            if(filtrosVideo.contains(extensionF)) tipo = 0;
-            if(filtrosAudio.contains(extensionF)) tipo = 1;
+            tfdFilePath.setText(mediaPath);
 
-            mediaPath = rutaF;
+            if(filtrosVideo.contains(extension)) tipoContenido = 0;
+            if(filtrosAudio.contains(extension)) tipoContenido = 1;
+
+            // mediaPath = rutaF;
 
             // imgPreview = null;
 
-            if(tipo == 0){
+            if(tipoContenido == 0){
                 MediaPreviewExtractor.getVideoThumbnail(mediaPath, img -> {
                     // System.out.println("intentando cargar imagen");
                     if(img != null)
                         MediaPreviewExtractor.setFitImageView(mediaPreview, img);
+                    else
+                        System.out.println("la imagen devuelta por " + mediaPath + " es null");
                 });
 
                 // System.out.println("tipo de video");
-            } else if(tipo == 1){
+            } else if(tipoContenido == 1){
                 try{
                     imgPreview = MediaPreviewExtractor.getAlbumArt(mediaPath);
                     MediaPreviewExtractor.setFitImageView(mediaPreview, imgPreview);
@@ -128,7 +137,7 @@ public class PostContenidoController extends SceneController{
     }
 
     private void goBack() throws IOException{
-        controlador.prepararVistaContenido(creador);
+        controlador.prepararVistaContenido(usuario);
         // admin.cambiarEscena("fxml/VistaContenido.fxml");
     }
 }

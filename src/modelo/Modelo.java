@@ -12,7 +12,6 @@ import java.util.List;
 
 import contenidos.Contenido;
 import contenidos.Etiqueta;
-import exceptions.RutaInvalidaException;
 import users.Creador;
 import users.Usuario;
 
@@ -34,12 +33,12 @@ public class Modelo implements Serializable{
         return adminUsuarios.addUsuario(nombre, password, tipoUsuario);
     }
 
-    public boolean usuarioExiste(String nombre, String password){
-        return adminUsuarios.usuarioExiste(nombre, password);
+    public boolean usuarioExiste(String nombre){
+        return adminUsuarios.usuarioExiste(nombre);
     }
 
-    public boolean validarNuevoUsuario(String nombre, String password, String adminPassword){
-        return adminUsuarios.validarNuevoUsuario(nombre, password, adminPassword);
+    public boolean validarNuevoUsuario(String nombre, String password, String adminPassword, boolean comoAdmin){
+        return adminUsuarios.validarNuevoUsuario(nombre, password, adminPassword, comoAdmin);
     }
 
     public Usuario getUsuario(String nombre, String password){
@@ -48,6 +47,10 @@ public class Modelo implements Serializable{
 
     public Usuario getUsuario(int id){
         return adminUsuarios.getElemento(id);
+    }
+
+    public void cambiarDatosUsuario(Usuario user, String nuevoNombre, String nuevaPassword){
+        adminUsuarios.cambiarDatosUsuario(user, nuevoNombre, nuevaPassword);
     }
 
     public String getAdminPassword(){ return adminUsuarios.getAdminPassword(); }
