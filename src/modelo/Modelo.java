@@ -53,6 +53,10 @@ public class Modelo implements Serializable{
         adminUsuarios.cambiarDatosUsuario(user, nuevoNombre, nuevaPassword);
     }
 
+    public void eliminarUsuario(Usuario user){
+        adminUsuarios.eliminarUsuario(user);
+    }
+
     public String getAdminPassword(){ return adminUsuarios.getAdminPassword(); }
 
 
@@ -65,8 +69,8 @@ public class Modelo implements Serializable{
         return adminContenidos.getElemento(id);
     }
 
-    public void eliminarContenido(int id){
-        adminContenidos.eliminarElemento(id);
+    public void eliminarContenido(Contenido content){
+        adminContenidos.eliminarContenido(content);
     }
 
 

@@ -47,4 +47,6 @@ public class PlayList {
     public boolean inicioPlayList(){
         return actual == 0;
     }
+
+    public List<Contenido> getListaContenidos(){ return listaContenidos; }
 }

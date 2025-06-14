@@ -46,6 +46,10 @@ public class AdministradorContenido extends DataBaseIncremental<Contenido> {
         return nuevoContenido;
     }
 
+    public void eliminarContenido(Contenido content){
+        eliminarElemento(content.getId());
+    }
+
     private String agregarMediaFile(String mediaPath, String nombre) throws IOException, FileNotFoundException{
         String newPath = carpetaContenidos + File.separator + nombre;
 
@@ -54,11 +58,11 @@ public class AdministradorContenido extends DataBaseIncremental<Contenido> {
         return newPath;
     }
 
-    public void listarContenidos(){
-        for (Contenido content : getContenidos()) {
-            System.out.println(content.getNombre() + "(" + content + ")");
-        }
-    }
+    // public void listarContenidos(){
+    //     for (Contenido content : getContenidos()) {
+    //         System.out.println(content.getNombre() + "(" + content + ")");
+    //     }
+    // }
 
-    public List<Contenido> getContenidos(){ return mapaElementos.values().stream().toList(); }
+    public List<Contenido> getContenidos(){ return listaElementos; }
 }

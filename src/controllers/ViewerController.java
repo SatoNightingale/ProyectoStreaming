@@ -8,12 +8,15 @@ import users.Administrador;
 import users.Creador;
 import users.Usuario;
 import utils.MediaPreviewExtractor;
+import javafx.animation.PauseTransition;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
@@ -23,6 +26,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
+import javafx.scene.text.Font;
 import javafx.util.Duration;
 import javafx.scene.media.MediaPlayer.Status;
 
@@ -42,7 +46,7 @@ public class ViewerController extends SceneController{
     @FXML ImageView ibnNext;
     @FXML ImageView ibnPlay;
     @FXML ImageView ibnPrev;
-    @FXML private VBox panelRecomendados;
+    @FXML private ListView<Contenido> lstRecomendaciones;
     @FXML private Button btnSubscribir;
     @FXML private Label lblTiempoAvanzado;
     @FXML private Label lblDuracionMedia;
@@ -96,7 +100,6 @@ public class ViewerController extends SceneController{
 
         btnPostContent.setOnAction(e -> {
             admin.cambiarEscena("fxml/PostContenidoView.fxml");
-            // controlador.prepararVistaPostContent((Creador) usuarioActual);
             cerrarMediaPlayer();
         });
 
@@ -107,15 +110,17 @@ public class ViewerController extends SceneController{
 
     /** Este método se llama cuando se carga la pantalla del visor, ya sea por primera vez o porque hayan cambiado a esta
      * @param user El usuario que está usando la aplicación
+     * @param data Se usa para pasar polimorfoseado el objeto Playlist de recomendaciones del usuario (cuando hay que pasarlo) 
      */
     public void init(Usuario user, Object...data){
         this.usuarioActual = user;
 
-        if(data.length != 0){
+        if(data.length > 0){
             PlayList recomendaciones = (PlayList) data[0];
             this.actualPlayList = recomendaciones;
         }
-        
+
+        initListRecomendaciones();
         initcmbCambiarUsuarios();
 
         btnPostContent.setVisible(usuarioActual instanceof Creador);
@@ -163,6 +168,13 @@ public class ViewerController extends SceneController{
 
         initProgressSlider();
 
+        Media.getMediaPlayer().setOnEndOfMedia(() -> {
+            // Pequeña pausita de dos segundos antes de reproducir el siguiente contenido
+            PauseTransition pausaAntesDeContinuar = new PauseTransition(Duration.seconds(2));
+            pausaAntesDeContinuar.setOnFinished(e -> playNext());
+            pausaAntesDeContinuar.play();
+        });
+
         reconstruirComentarios(content);
     }
 
@@ -188,6 +200,41 @@ public class ViewerController extends SceneController{
             e.printStackTrace();
             System.out.println("El archivo no tiene art o no se pudo cargar");
         }
+    }
+
+    private void initListRecomendaciones(){
+        lstRecomendaciones.getItems().setAll(actualPlayList.getListaContenidos());
+        
+        lstRecomendaciones.setCellFactory(lv -> {
+            // Construir cada celda (elemento) de la lista
+            ListCell<Contenido> celda = new ListCell<>() {
+                protected void updateItem(Contenido item, boolean empty){
+                    super.updateItem(item, empty);
+
+                    if(empty || item == null){
+                        setText(null);
+                    } else {
+                        Label lblNombre = new Label(item.getNombre());
+                        lblNombre.setFont(new Font(14));
+                        Label lblAutor = new Label(item.getCreador().getNombre());
+                        lblAutor.setFont(new Font(11));
+
+                        VBox box = new VBox(lblNombre, lblAutor);
+                        setGraphic(box);
+                    }
+                }
+            };
+
+            // Acción al dar doble click: reproducir el contenido recomendado
+            celda.setOnMouseClicked(e -> {
+                if(e.getClickCount() == 2 && !celda.isEmpty()){
+                    Contenido content = celda.getItem();
+                    playContenido(content);
+                }
+            });
+
+            return celda;
+        });
     }
 
     private void initcmbCambiarUsuarios(){
@@ -220,7 +267,7 @@ public class ViewerController extends SceneController{
         });
 
         // Actualizar mientras se reproduce
-        mediaPlayer.currentTimeProperty().addListener((observale, oldValue, newValue) -> {
+        mediaPlayer.currentTimeProperty().addListener((observable, oldValue, newValue) -> {
             if(!sldMediaProgress.isValueChanging()){ // Si no está siendo manipulado manualmente
                 sldMediaProgress.setValue(newValue.toSeconds());
                 lblTiempoAvanzado.setText(crearStringTiempo(newValue));
@@ -274,12 +321,16 @@ public class ViewerController extends SceneController{
         }
     }
 
-    @FXML private void initIbnNext(MouseEvent evt){
+    private void playNext(){
         if(!actualPlayList.finPlaylist()){
             playContenido(actualPlayList.siguiente());
         } else {
             playContenido(actualPlayList.reload());
         }
+    }
+
+    @FXML private void initIbnNext(MouseEvent evt){
+        playNext();
     }
 
     @FXML private void initIbnPrev(MouseEvent evt){
@@ -308,10 +359,18 @@ public class ViewerController extends SceneController{
 
     private String crearStringTiempo(Duration duracion){
         String horas, minutos, segundos;
+        /*
+         * Si hay 2 horas, 40 minutos y 35 segundos
+         * 2 horas
+         * 160 minutos
+         * 9635 segundos
+         * 160 % 60 = 40 min
+         * 9635 % 60 = 35 seg
+         */
 
         horas = String.valueOf((int) duracion.toHours());
-        minutos = String.valueOf((int) duracion.toMinutes());
-        segundos = String.valueOf((int) duracion.toSeconds());
+        minutos = String.valueOf((int) duracion.toMinutes() % 60);
+        segundos = String.valueOf((int) duracion.toSeconds() % 60);
 
         if(horas.length() > 2) horas = "XX";
         if(horas.length() < 2) horas = "0" + horas;

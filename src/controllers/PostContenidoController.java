@@ -18,6 +18,7 @@ import javafx.stage.FileChooser;
 import users.Creador;
 import users.Usuario;
 import utils.MediaPreviewExtractor;
+import utils.MensajesDialogo;
 
 public class PostContenidoController extends SceneController{
     @FXML private Button btnAtras;
@@ -68,21 +69,19 @@ public class PostContenidoController extends SceneController{
 
             try{
                 controlador.postearContenido(mediaPath, nombre, (Creador) usuario, tipoContenido, listaEtiquetas);
-                MainController.showInfoMessage("Su contenido se ha añadido a la plataforma");
+                MensajesDialogo.mostrarError("Su contenido se ha añadido a la plataforma");
                 goBack();
             } catch (Exception ex){
-                MainController.showErrorMessage("Ocurrió un error y no se pudo subir el contenido\n" + ex.getMessage());
+                MensajesDialogo.mostrarError("Ocurrió un error y no se pudo subir el contenido\n" + ex.getMessage());
                 ex.printStackTrace();
             }
         } else {
-            MainController.showErrorMessage("Por favor, llene todos los campos");
+            MensajesDialogo.mostrarError("Por favor, llene todos los campos");
         }
     }
 
     private boolean validarPost(){
         File fichero = new File(tfdFilePath.getText());
-
-        //!tfdFilePath.getText().isEmpty() &&
 
         return fichero.exists() && !tfdNombreContenido.getText().isEmpty() && !tfdEtiquetasContenido.getText().isEmpty() &&  tipoContenido != -1;
     }
@@ -109,26 +108,17 @@ public class PostContenidoController extends SceneController{
             if(filtrosVideo.contains(extension)) tipoContenido = 0;
             if(filtrosAudio.contains(extension)) tipoContenido = 1;
 
-            // mediaPath = rutaF;
-
-            // imgPreview = null;
-
             if(tipoContenido == 0){
                 MediaPreviewExtractor.getVideoThumbnail(mediaPath, img -> {
-                    // System.out.println("intentando cargar imagen");
                     if(img != null)
                         MediaPreviewExtractor.setFitImageView(mediaPreview, img);
                     else
                         System.out.println("la imagen devuelta por " + mediaPath + " es null");
                 });
-
-                // System.out.println("tipo de video");
             } else if(tipoContenido == 1){
                 try{
                     imgPreview = MediaPreviewExtractor.getAlbumArt(mediaPath);
                     MediaPreviewExtractor.setFitImageView(mediaPreview, imgPreview);
-
-                    // System.out.println("tipo de audio");
                 } catch(Exception ex){
                     ex.printStackTrace();
                 }

@@ -34,7 +34,7 @@ public class AdministradorUsuarios extends DataBaseIncremental<Usuario> {
     }
 
     public boolean usuarioExiste(String nombre){
-        return mapaElementos.values().stream().anyMatch(
+        return listaElementos.stream().anyMatch(
             u -> u.getNombre().equals(nombre));
     }
 
@@ -49,7 +49,7 @@ public class AdministradorUsuarios extends DataBaseIncremental<Usuario> {
     }
 
     public Usuario getUsuario(String nombre, String password){
-        Optional<Usuario> opt = mapaElementos.values().stream().filter(
+        Optional<Usuario> opt = listaElementos.stream().filter(
             u -> u.getNombre().equals(nombre) && u.getPassword().equals(password)
         ).findFirst();
 
@@ -61,13 +61,17 @@ public class AdministradorUsuarios extends DataBaseIncremental<Usuario> {
         user.setPassword(nuevaPassword);
     }
 
-    public void listarUsuarios(){
-        for (Usuario user : getUsuarios()) {
-            System.out.println(user.getNombre() + "(" + user + ")");
-        }
+    public void eliminarUsuario(Usuario user){
+        this.eliminarElemento(user.getId());
     }
+
+    // public void listarUsuarios(){
+    //     for (Usuario user : getUsuarios()) {
+    //         System.out.println(user.getNombre() + "(" + user + ")");
+    //     }
+    // }
 
     public String getAdminPassword(){ return adminPassword; }
 
-    public List<Usuario> getUsuarios(){ return mapaElementos.values().stream().toList(); }
+    public List<Usuario> getUsuarios(){ return listaElementos.stream().toList(); }
 }

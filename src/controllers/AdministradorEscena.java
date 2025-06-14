@@ -7,6 +7,7 @@ import java.util.Map;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import utils.MensajesDialogo;
 
 public class AdministradorEscena {
     private MainController controlador;
@@ -43,7 +44,7 @@ public class AdministradorEscena {
 
             stage.setScene(sc.getScene());
         } catch(IOException e){
-            MainController.showErrorMessage("No se pudo cargar la escena " + nombreEscena);
+            MensajesDialogo.mostrarError("No se pudo cargar la escena " + nombreEscena);
 
             e.printStackTrace();
         }

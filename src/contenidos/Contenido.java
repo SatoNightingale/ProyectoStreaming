@@ -71,6 +71,7 @@ public class Contenido implements Serializable{
         sumTiempoReproducido += porc;
     }
 
+    public int getId(){ return id; }
     public String getNombre() {return nombre; }
     public Creador getCreador() { return creador; }
     public int getTipoContenido(){ return tipo; }

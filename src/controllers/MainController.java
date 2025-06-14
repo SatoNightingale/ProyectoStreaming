@@ -7,8 +7,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import javafx.application.Application;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import modelo.Modelo;
@@ -189,8 +187,35 @@ public class MainController extends Application {
         }
     }
 
-    public void eliminarCuenta(Usuario user){
-        
+    public void eliminarUsuario(Usuario user){
+        List<Creador> suscripciones = user.getSuscripciones();
+
+        for(Creador suscripcion : suscripciones)
+            desuscribirUsuario(user, suscripcion);
+
+        List<Contenido> listaContenidos = modelo.getContenidos();
+
+        for(Contenido content : listaContenidos){
+            if(content.getVotantes().contains(user)){
+                content.getVotantes().remove(user);
+            }
+        }
+
+        if(user instanceof Creador){
+            Creador creador = (Creador) user;
+
+            List<Usuario> suscriptores = creador.getSuscriptores();
+
+            for(Usuario suscriptor : suscriptores)
+                desuscribirUsuario(suscriptor, creador);
+            
+            List<Contenido> contenidos = creador.getContenidosSubidos();
+
+            for(Contenido content : contenidos)
+                retirarContenido(content);
+        }
+
+        modelo.eliminarUsuario(user);
     }
 
     /**Añade ("sube") un nuevo contenido a la cuenta del creador. Se añaden las etiquetas del contenido subido a los temas del creador, pero tienen menos importancia mientras más contenido haya subido este.
@@ -218,12 +243,10 @@ public class MainController extends Application {
      * @param id El id del contenido a eliminar
      * @param creador El creador que posee este contenido
      */
-    public void retirarContenido(int id){
-        Contenido aRetirar = modelo.getContenido(id);
-        Creador autor = aRetirar.getCreador();
-
-        modelo.eliminarContenido(id);
-        autor.getContenidosSubidos().remove(aRetirar);
+    public void retirarContenido(Contenido content){
+        Creador autor = content.getCreador();
+        modelo.eliminarContenido(content);
+        autor.getContenidosSubidos().remove(content);
     }
     
     public void usuarioComenta(ViewerController controller, Usuario user, Contenido content, String texto){
@@ -264,22 +287,6 @@ public class MainController extends Application {
         } catch(IOException ex) {
             ex.printStackTrace();
         }
-    }
-
-    public static Alert showErrorMessage(String mensaje){
-        Alert mensajeError = new Alert(Alert.AlertType.ERROR, mensaje, ButtonType.CLOSE);
-
-        mensajeError.showAndWait();
-        // mensajeError.getResult().APPLY
-        return mensajeError;
-    }
-
-    public static Alert showInfoMessage(String mensaje){
-        Alert mensajeInfo = new Alert(Alert.AlertType.INFORMATION, mensaje, ButtonType.CLOSE);
-
-        mensajeInfo.showAndWait();
-
-        return mensajeInfo;
     }
 
     public Modelo getModelo(){ return modelo; }

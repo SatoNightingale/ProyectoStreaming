@@ -6,6 +6,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import users.Usuario;
+import utils.MensajesDialogo;
 
 public class LoginController extends SceneController {
     @FXML private Button btnEnter;
@@ -42,11 +43,11 @@ public class LoginController extends SceneController {
             if(validarDatosUsuario()){
                 controlador.usuarioLogin(tfdNombre.getText(), pfdPassword.getText());
             } else { // TODO: Tírame una excepción
-                MainController.showErrorMessage("Por favor, llene todos los campos");
+                MensajesDialogo.mostrarError("Por favor, llene todos los campos");
             }
         } catch(Exception ex){
             ex.printStackTrace();
-            MainController.showErrorMessage("Datos de usuario incorrectos");
+            MensajesDialogo.mostrarError("Datos de usuario incorrectos");
         }
     }
 }

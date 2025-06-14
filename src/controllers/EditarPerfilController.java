@@ -9,6 +9,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -23,6 +24,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import users.Creador;
 import users.Usuario;
+import utils.MensajesDialogo;
 
 public class EditarPerfilController extends SceneController{
     @FXML private ListView<Creador> lstSuscripciones;
@@ -56,6 +58,8 @@ public class EditarPerfilController extends SceneController{
 
         paneMiContenido.setDisable(!(usuario instanceof Creador));
 
+        btnBorrarCuenta.setOnAction(e -> solicitarEliminacionCuenta());
+
         btnAtras.setOnAction(e -> goBack());
     }
 	
@@ -63,13 +67,24 @@ public class EditarPerfilController extends SceneController{
         try {
             controlador.cambiarDatosUsuario(usuario, pfdPassword.getText(), tfdNombre.getText(), pfdNewPassword.getText());
 
-            MainController.showInfoMessage("Sus datos se han cambiado con éxito");
+            MensajesDialogo.mostrarInfo("Sus datos se han cambiado con éxito");
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
 
+    public void solicitarEliminacionCuenta(){
+        ButtonType respuesta = MensajesDialogo.mostrarEleccion("¿Estás seguro de que quieres eliminar tu cuenta?\nEsta acción es irreversible...");
+
+        if(respuesta.equals(ButtonType.YES)){ //CAGASTE
+            MensajesDialogo.mostrarInfo("Arigatou. Sayonara...\nありがとう. さよなら ..."); // Your name ('Kimi no Na Wa') referencia
+            controlador.eliminarUsuario(usuario);
+            
+            admin.cambiarEscena("fxml/LoginView.fxml");
+        }
+    }
+    
     public void actualizarListaSuscripciones(){
         lstSuscripciones.getItems().clear();
         lstSuscripciones.getItems().addAll(usuario.getSuscripciones());
@@ -81,7 +96,7 @@ public class EditarPerfilController extends SceneController{
                 if(empty || item == null){
                     setText(null);
                 } else {
-                    setGraphic(crearTarjetaSuscripcion(item));
+                    setGraphic(crearCeldaSuscripcion(item));
                 }
             }
         });
@@ -128,7 +143,7 @@ public class EditarPerfilController extends SceneController{
         });
     }
 
-    public HBox crearTarjetaSuscripcion(Creador creador){
+    public HBox crearCeldaSuscripcion(Creador creador){
         Label lblName = new Label(creador.getNombre());
         lblName.setPadding(new Insets(0, 0, 0, 5));
 
@@ -174,7 +189,10 @@ public class EditarPerfilController extends SceneController{
         ibnCancel.setFitHeight(25);
         ibnCancel.setFitWidth(25);
         
-        
+        ibnCancel.setOnMouseClicked(e -> {
+            controlador.retirarContenido(content);
+            actualizarListaMiContenido();
+        });
 
         HBox box = new HBox(contentWrapper, ibnCancel);
         box.setAlignment(Pos.CENTER_LEFT);
