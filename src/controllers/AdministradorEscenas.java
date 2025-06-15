@@ -9,13 +9,13 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import utils.MensajesDialogo;
 
-public class AdministradorEscena {
+public class AdministradorEscenas {
     private MainController controlador;
 
     private Stage stage;
     private Map<String, SceneController> mapaEscenas;
 
-    public AdministradorEscena(Stage primaryStage, MainController mainCon) throws IOException{
+    public AdministradorEscenas(Stage primaryStage, MainController mainCon) throws IOException{
         this.controlador = mainCon;
         this.stage = primaryStage;
         mapaEscenas = new HashMap<>();

@@ -106,6 +106,10 @@ public class ViewerController extends SceneController{
         btnEditarPerfil.setOnAction(e -> {
             admin.cambiarEscena("fxml/EditarPerfilView.fxml");
         });
+
+        btnAdministrar.setOnAction(e -> {
+            admin.cambiarEscena("fxml/AdministradorView.fxml");
+        });
     }
 
     /** Este método se llama cuando se carga la pantalla del visor, ya sea por primera vez o porque hayan cambiado a esta

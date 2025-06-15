@@ -15,7 +15,7 @@ import contenidos.*;
 
 public class MainController extends Application {
     private Modelo modelo;
-    private AdministradorEscena adminEscena;
+    private AdministradorEscenas adminEscenas;
     private Usuario usuario;
 
     public static void main(String[] args) throws Exception {
@@ -26,7 +26,7 @@ public class MainController extends Application {
     public void start(Stage primaryStage) throws Exception {
         this.modelo = Modelo.cargarModelo();
 
-        adminEscena = new AdministradorEscena(primaryStage, this);
+        adminEscenas = new AdministradorEscenas(primaryStage, this);
         
         if(modelo.getContenidos().isEmpty()){
             inicializarSimulador();
@@ -36,7 +36,7 @@ public class MainController extends Application {
 
         primaryStage.setOnCloseRequest(this::intentarGuardarDatos);
         
-        adminEscena.cambiarEscena("fxml/LoginView.fxml");
+        adminEscenas.cambiarEscena("fxml/LoginView.fxml");
         primaryStage.setTitle("Forever in debt to your priceless advice...");
         primaryStage.show();
     }
@@ -103,7 +103,7 @@ public class MainController extends Application {
 
     public void prepararVistaContenido(Usuario user) throws IOException{
         PlayList recomendaciones = crearPlaylistRecomendaciones(user);
-        adminEscena.cambiarEscena("fxml/VistaContenido.fxml", recomendaciones);
+        adminEscenas.cambiarEscena("fxml/VistaContenido.fxml", recomendaciones);
     }
 
 
