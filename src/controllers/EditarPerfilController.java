@@ -52,9 +52,9 @@ public class EditarPerfilController extends SceneController{
 
         tfdNombre.setText(usuario.getNombre());
 
-        actualizarListaSuscripciones();
-        actualizarListaHistorial();
-        actualizarListaMiContenido();
+        inicializarListaSuscripciones();
+        inicializarListaHistorial();
+        inicializarListaMiContenido();
 
         paneMiContenido.setDisable(!(usuario instanceof Creador));
 
@@ -85,10 +85,7 @@ public class EditarPerfilController extends SceneController{
         }
     }
     
-    public void actualizarListaSuscripciones(){
-        lstSuscripciones.getItems().clear();
-        lstSuscripciones.getItems().addAll(usuario.getSuscripciones());
-
+    private void inicializarListaSuscripciones(){
         lstSuscripciones.setCellFactory(lv -> new ListCell<Creador>() {
             protected void updateItem(Creador item, boolean empty){
                 super.updateItem(item, empty);
@@ -100,12 +97,11 @@ public class EditarPerfilController extends SceneController{
                 }
             }
         });
+
+        actualizarListaSuscripciones();
     }
 
-    public void actualizarListaMiContenido(){
-        lstMiContenido.getItems().clear();
-        lstMiContenido.getItems().addAll(((Creador) usuario).getContenidosSubidos());
-        
+    private void inicializarListaMiContenido(){
         lstMiContenido.setCellFactory(lv -> new ListCell<Contenido>() {
             protected void updateItem(Contenido item, boolean empty){
                 super.updateItem(item, empty);
@@ -117,13 +113,11 @@ public class EditarPerfilController extends SceneController{
                 }
             }
         });
+
+        actualizarListaMiContenido();
     }
 
-    public void actualizarListaHistorial(){
-        List<Contenido> historial = usuario.getHistorial();
-        Collections.reverse(historial);
-        lstHistorial.getItems().addAll(historial);
-
+    private void inicializarListaHistorial(){
         lstHistorial.setCellFactory(lv -> new ListCell<Contenido>() {
             protected void updateItem(Contenido item, boolean empty){
                 super.updateItem(item, empty);
@@ -141,9 +135,26 @@ public class EditarPerfilController extends SceneController{
                 setStyle("");
             }
         });
+
+        actualizarListaHistorial();
     }
 
-    public HBox crearCeldaSuscripcion(Creador creador){
+    private void actualizarListaSuscripciones(){
+        lstSuscripciones.getItems().setAll(usuario.getSuscripciones());
+    }
+
+    private void actualizarListaMiContenido(){
+        lstMiContenido.getItems().clear();
+        lstMiContenido.getItems().setAll(((Creador) usuario).getContenidosSubidos());
+    }
+
+    private void actualizarListaHistorial(){
+        List<Contenido> historial = usuario.getHistorial();
+        Collections.reverse(historial);
+        lstHistorial.getItems().setAll(historial);
+    }
+
+    private HBox crearCeldaSuscripcion(Creador creador){
         Label lblName = new Label(creador.getNombre());
         lblName.setPadding(new Insets(0, 0, 0, 5));
 
@@ -166,7 +177,7 @@ public class EditarPerfilController extends SceneController{
         return result;
     }
 
-    public HBox crearCeldaContenido(Contenido content){
+    private HBox crearCeldaContenido(Contenido content){
         Label lblNombre = new Label(content.getNombre());
         lblNombre.setFont(new Font(14));
         
@@ -190,8 +201,10 @@ public class EditarPerfilController extends SceneController{
         ibnCancel.setFitWidth(25);
         
         ibnCancel.setOnMouseClicked(e -> {
+            // System.out.println("Contenidos antes: " + controlador.getModelo().getContenidos().size());
             controlador.retirarContenido(content);
             actualizarListaMiContenido();
+            // System.out.println("Contenidos ahora: " + controlador.getModelo().getContenidos().size());
         });
 
         HBox box = new HBox(contentWrapper, ibnCancel);

@@ -73,5 +73,5 @@ public class AdministradorUsuarios extends DataBaseIncremental<Usuario> {
 
     public String getAdminPassword(){ return adminPassword; }
 
-    public List<Usuario> getUsuarios(){ return listaElementos.stream().toList(); }
+    public List<Usuario> getUsuarios(){ return getListaElementos(); }
 }

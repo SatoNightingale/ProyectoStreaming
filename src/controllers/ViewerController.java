@@ -61,7 +61,6 @@ public class ViewerController extends SceneController{
     @FXML private VBox boxBtnComentarios;
     @FXML private Label lblUltimoComentario;
 
-    private Usuario usuarioActual;
     private PlayList actualPlayList;
 
     @FXML
@@ -70,17 +69,17 @@ public class ViewerController extends SceneController{
         mediaZone.setOnMouseExited(e -> panelMediaControl.setVisible(false));
 
         btnLike.setOnAction(e -> {
-            controlador.usuarioTocaLike(usuarioActual, actualPlayList.contenidoActual());
+            controlador.usuarioTocaLike(usuario, actualPlayList.contenidoActual());
             updateBtnLike(actualPlayList.contenidoActual());
         });
 
         btnSubscribir.setOnAction(e -> {
-            controlador.usuarioTocaSuscribir(usuarioActual, actualPlayList.contenidoActual().getCreador());
+            controlador.usuarioTocaSuscribir(usuario, actualPlayList.contenidoActual().getCreador());
             updateBtnSuscribir(actualPlayList.contenidoActual());
         });
 
         btnEnviarComentario.setOnAction(e -> {
-            controlador.usuarioComenta(this, usuarioActual, actualPlayList.contenidoActual(), tfdComentario.getText());
+            controlador.usuarioComenta(this, usuario, actualPlayList.contenidoActual(), tfdComentario.getText());
             updateLblComentarios();
             tfdComentario.setText("");
         });
@@ -105,10 +104,12 @@ public class ViewerController extends SceneController{
 
         btnEditarPerfil.setOnAction(e -> {
             admin.cambiarEscena("fxml/EditarPerfilView.fxml");
+            cerrarMediaPlayer();
         });
 
         btnAdministrar.setOnAction(e -> {
             admin.cambiarEscena("fxml/AdministradorView.fxml");
+            cerrarMediaPlayer();
         });
     }
 
@@ -117,7 +118,7 @@ public class ViewerController extends SceneController{
      * @param data Se usa para pasar polimorfoseado el objeto Playlist de recomendaciones del usuario (cuando hay que pasarlo) 
      */
     public void init(Usuario user, Object...data){
-        this.usuarioActual = user;
+        this.usuario = user;
 
         if(data.length > 0){
             PlayList recomendaciones = (PlayList) data[0];
@@ -127,8 +128,8 @@ public class ViewerController extends SceneController{
         initListRecomendaciones();
         initcmbCambiarUsuarios();
 
-        btnPostContent.setVisible(usuarioActual instanceof Creador);
-        btnAdministrar.setVisible(usuarioActual instanceof Administrador);
+        btnPostContent.setVisible(usuario instanceof Creador);
+        btnAdministrar.setVisible(usuario instanceof Administrador);
 
         if(!actualPlayList.finPlaylist()){
             Contenido content = actualPlayList.contenidoActual();
@@ -180,13 +181,15 @@ public class ViewerController extends SceneController{
         });
 
         reconstruirComentarios(content);
+
+        usuario.getHistorial().add(content);
     }
 
     public void cerrarMediaPlayer(){
         MediaPlayer player = Media.getMediaPlayer();
 
         if(player != null){
-            controlador.usuarioVeContenido(usuarioActual, actualPlayList.contenidoActual(), getFraccionVisto());
+            controlador.usuarioVeContenido(usuario, actualPlayList.contenidoActual(), getFraccionVisto());
 
             player.dispose();
         }
@@ -245,16 +248,16 @@ public class ViewerController extends SceneController{
         // Crea el comboBox de cambiar usuario con una lista de nombres de todos los usuarios
         // También podría usar controlador.getModelo().getUsuarios(), pero para eso tendría que implementar el toString de Usuario y por cuestiones de debug lo necesito sin implementar
         cmbCambiarUsuario.setItems(FXCollections.observableArrayList(
-            controlador.getModelo().getUsuarios().stream().map(Usuario::getNombre).toList()
+            controlador.getAdminUsuarios().getUsuarios().stream().map(Usuario::getNombre).toList()
         ));
 
-        cmbCambiarUsuario.getSelectionModel().select(usuarioActual.getId());
+        cmbCambiarUsuario.getSelectionModel().select(usuario.getId());
 
         // Este setOnAction no se ejecuta si se selecciona el mismo elemento que ya estaba
         cmbCambiarUsuario.setOnAction(e -> {
             admin.cambiarEscena("fxml/LoginView.fxml");
             cerrarMediaPlayer();
-            // System.out.println("Wanna change usuarioActual huh");
+            // System.out.println("Wanna change usuario huh");
         });
 
         // cmbCambiarUsuario.setOnMouseClicked(e -> {
@@ -286,7 +289,7 @@ public class ViewerController extends SceneController{
     private void updateBtnLike(Contenido content){
         btnLike.setText(String.valueOf(content.getLikes()));
 
-        if(content.getVotantes().contains(usuarioActual)){
+        if(content.getVotantes().contains(usuario)){
             btnLike.setStyle("-fx-background-color: lightblue");
         } else {
             btnLike.setStyle("");
@@ -294,7 +297,7 @@ public class ViewerController extends SceneController{
     }
 
     private void updateBtnSuscribir(Contenido content){
-        if(usuarioActual.suscritoACreador(content.getCreador())){
+        if(usuario.suscritoACreador(content.getCreador())){
             btnSubscribir.setText("Suscrito");
             btnSubscribir.setStyle("-fx-background-color: lightblue");
         } else {

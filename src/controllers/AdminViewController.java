@@ -31,14 +31,11 @@ public class AdminViewController extends SceneController{
     
     @Override
     public void init(Usuario usuario, Object... data) {
-        actualizarListaContenidos();
-        actualizarListaUsuarios();
+        inicializarListaContenidos();
+        inicializarListaUsuarios();
     }
 
-    private void actualizarListaContenidos(){
-        List<Contenido> contenidos = controlador.getModelo().getContenidos();
-        lstContenidos.getItems().setAll(contenidos);
-
+    private void inicializarListaContenidos(){
         lstContenidos.setCellFactory(lv -> new ListCell<Contenido>(){
             protected void updateItem(Contenido item, boolean empty){
                 super.updateItem(item, empty);
@@ -50,12 +47,11 @@ public class AdminViewController extends SceneController{
                 }
             }
         });
+
+        actualizarListaContenidos();
     }
 
-    private void actualizarListaUsuarios(){
-        List<Usuario> usuarios = controlador.getModelo().getUsuarios();
-        lstUsuarios.getItems().setAll(usuarios);
-
+    private void inicializarListaUsuarios(){
         lstUsuarios.setCellFactory(lv -> new ListCell<Usuario>(){
             protected void updateItem(Usuario item, boolean empty){
                 super.updateItem(item, empty);
@@ -67,6 +63,18 @@ public class AdminViewController extends SceneController{
                 }
             }
         });
+
+        actualizarListaUsuarios();
+    }
+
+    private void actualizarListaContenidos(){
+        List<Contenido> contenidos = controlador.getAdminContenidos().getContenidos();
+        lstContenidos.getItems().setAll(contenidos);
+    }
+
+    private void actualizarListaUsuarios(){
+        List<Usuario> usuarios = controlador.getAdminUsuarios().getUsuarios();
+        lstUsuarios.getItems().setAll(usuarios);
     }
 
     private Node crearFichaContenido(Contenido content){

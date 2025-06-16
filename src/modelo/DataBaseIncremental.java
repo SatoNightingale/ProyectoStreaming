@@ -60,6 +60,13 @@ public abstract class DataBaseIncremental<T> implements Serializable{
 
         if(id == listaElementos.size()-1) listaElementos.remove(id);
     }
+    
+    /**
+     * Si queremos devolver la lista de elementos, hay que tener en cuenta que esta, al sufrir eliminaciones, puede contener elementos nulos, y estos elementos no son útiles para los métodos que trabajan con esta lista. Por tanto, lo que debemos devolver es una lista nueva con todos los elementos no nulos de la original, aunque perdamos la posibilidad de referenciar a cada elemento por su posición
+     */
+    protected List<T> getListaElementos(){
+        return listaElementos.stream().filter(elemento -> elemento != null).toList();
+    }
 
     /**
      * Simplemente devuelve el elemento en la posición id

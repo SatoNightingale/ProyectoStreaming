@@ -1,7 +1,12 @@
 package controllers;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.file.InvalidPathException;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -9,12 +14,15 @@ import java.util.List;
 import javafx.application.Application;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import modelo.Modelo;
+import modelo.AdministradorContenido;
+import modelo.AdministradorUsuarios;
 import users.*;
 import contenidos.*;
 
 public class MainController extends Application {
-    private Modelo modelo;
+    // private Modelo modelo;
+    private AdministradorContenido adminContenidos;
+    private AdministradorUsuarios adminUsuarios;
     private AdministradorEscenas adminEscenas;
     private Usuario usuario;
 
@@ -24,11 +32,12 @@ public class MainController extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        this.modelo = Modelo.cargarModelo();
+        // this.modelo = Modelo.cargarModelo();
+        cargarDatos();
 
         adminEscenas = new AdministradorEscenas(primaryStage, this);
         
-        if(modelo.getContenidos().isEmpty()){
+        if(adminContenidos.getContenidos().isEmpty()){
             inicializarSimulador();
         }
         
@@ -43,31 +52,31 @@ public class MainController extends Application {
 
     public void inicializarSimulador(){
         System.out.println("Llamada a inicializarSimulador");
-        Creador creadorInit = (Creador) modelo.addUsuario("Satoshi", "04242564", 1);
+        Creador creadorInit = (Creador) adminUsuarios.addUsuario("Satoshi", "04242564", 1);
 
         try {
-            modelo.addContenido(
+            adminContenidos.addContenido(
                 "default content/Fairy Tail Main Theme.mp4", 
                 "Fairy Tail Main Theme (Demo Video)",
                 creadorInit, 
                 0, 
                 Arrays.asList(new Etiqueta("Anime", 5), new Etiqueta("Música", 3)));
 
-            modelo.addContenido(
+            adminContenidos.addContenido(
                 "default content/amaranth.mp4", 
                 "Nightwish - Amaranth (Demo Video)", 
                 creadorInit, 
                 0, 
                 Arrays.asList(new Etiqueta("Música", 3), new Etiqueta("Rock", 5)));
 
-            modelo.addContenido(
+            adminContenidos.addContenido(
                 "default content/nemo.mp3",
                 "Nightwish - Nemo",
                 creadorInit,
                 1,
                 Arrays.asList(new Etiqueta("Música", 3), new Etiqueta("Metal sinfónico", 5)));
 
-            modelo.addContenido(
+            adminContenidos.addContenido(
                 "default content/song of the caged bird.mp3",
                 "Lindsey Stirling - Song of the Caged Bird",
                 creadorInit,
@@ -79,7 +88,7 @@ public class MainController extends Application {
     }
 
     public void usuarioLogin(String nombre, String password) throws Exception{
-        Usuario user = modelo.getUsuario(nombre, password);
+        Usuario user = adminUsuarios.getUsuario(nombre, password);
         
         if(user != null){
             usuario = user;
@@ -90,8 +99,8 @@ public class MainController extends Application {
     }
 
     public void nuevoUsuario(String nombre, String password, String adminPassword, int tipoCuenta) throws Exception{
-        if(modelo.validarNuevoUsuario(nombre, password, adminPassword, tipoCuenta == 2)){
-            Usuario nuevoUsuario = modelo.addUsuario(nombre, password, tipoCuenta);
+        if(adminUsuarios.validarNuevoUsuario(nombre, password, adminPassword, tipoCuenta == 2)){
+            Usuario nuevoUsuario = adminUsuarios.addUsuario(nombre, password, tipoCuenta);
 
             usuario = nuevoUsuario;
 
@@ -125,8 +134,6 @@ public class MainController extends Application {
         for (Etiqueta etiqueta : etiquetasUsuario) {
             listaEtquietasContenido.actualizarEtiqueta(etiqueta.getNombre(), (etiqueta.getPeso() / fraccionVisto) / 4);
         }
-
-        user.getHistorial().add(content);
 
         content.addReproduccion(fraccionVisto);
     }
@@ -175,8 +182,8 @@ public class MainController extends Application {
 
     public void cambiarDatosUsuario(Usuario user, String password, String nuevoNombre, String nuevaPassword) throws Exception{
         if(user.getPassword().equals(password)){
-            if(!modelo.usuarioExiste(nuevoNombre) || user.getNombre().equals(nuevoNombre)){
-                modelo.cambiarDatosUsuario(user, nuevoNombre, nuevaPassword);
+            if(!adminUsuarios.usuarioExiste(nuevoNombre) || user.getNombre().equals(nuevoNombre)){
+                adminUsuarios.cambiarDatosUsuario(user, nuevoNombre, nuevaPassword);
             } else {
                 System.out.println("Un usuario con ese nombre ya existe");
                 // TODO
@@ -193,7 +200,7 @@ public class MainController extends Application {
         for(Creador suscripcion : suscripciones)
             desuscribirUsuario(user, suscripcion);
 
-        List<Contenido> listaContenidos = modelo.getContenidos();
+        List<Contenido> listaContenidos = adminContenidos.getContenidos();
 
         for(Contenido content : listaContenidos){
             if(content.getVotantes().contains(user)){
@@ -215,7 +222,7 @@ public class MainController extends Application {
                 retirarContenido(content);
         }
 
-        modelo.eliminarUsuario(user);
+        adminUsuarios.eliminarUsuario(user);
     }
 
     /**Añade ("sube") un nuevo contenido a la cuenta del creador. Se añaden las etiquetas del contenido subido a los temas del creador, pero tienen menos importancia mientras más contenido haya subido este.
@@ -228,7 +235,7 @@ public class MainController extends Application {
      * @throws InvalidPathException Cuando el archivo no existe, o la ruta provista contiene caracteres no soportados
      */
     public void postearContenido(String mediaPath, String nombre, Creador creador, int tipoContenido, List<Etiqueta> etiquetas) throws IOException{
-        Contenido nc = modelo.addContenido(mediaPath, nombre, creador, tipoContenido, etiquetas);
+        Contenido nc = adminContenidos.addContenido(mediaPath, nombre, creador, tipoContenido, etiquetas);
         
         int cantContenidos = creador.getContenidosSubidos().size();
         List<Etiqueta> etiquetasContenido = nc.getTags().getList();
@@ -244,9 +251,17 @@ public class MainController extends Application {
      * @param creador El creador que posee este contenido
      */
     public void retirarContenido(Contenido content){
+        System.out.println("Contenidos antes:");
+        adminContenidos.listarContenidos();
+        
+        System.out.println("ID del contenido que estoy elimianndo: " + content.getId());
+
         Creador autor = content.getCreador();
-        modelo.eliminarContenido(content);
+        adminContenidos.eliminarContenido(content);
         autor.getContenidosSubidos().remove(content);
+
+        System.out.println("Contenidos ahora:");
+        adminContenidos.listarContenidos();
     }
     
     public void usuarioComenta(ViewerController controller, Usuario user, Contenido content, String texto){
@@ -264,7 +279,7 @@ public class MainController extends Application {
      * @return Una PlayList personalizada para el usuario
      */
     public PlayList crearPlaylistRecomendaciones(Usuario user){
-        List<Contenido> contenidos = modelo.getContenidos();
+        List<Contenido> contenidos = adminContenidos.getContenidos();
 
         List<Contenido> resultados = contenidos.stream()
             .sorted(Comparator.comparingDouble( // Ordena según los criterios especificados
@@ -281,7 +296,7 @@ public class MainController extends Application {
 
     public void intentarGuardarDatos(WindowEvent event){
         try{
-            modelo.guardarDatos();
+            guardarDatos();
         } catch(FileNotFoundException ex){ //TODO
             System.out.println(ex.getMessage());
         } catch(IOException ex) {
@@ -289,7 +304,41 @@ public class MainController extends Application {
         }
     }
 
-    public Modelo getModelo(){ return modelo; }
+    public void cargarDatos() {
+        File inputFile = new File("data.bin");
+
+        try{
+            ObjectInputStream is = new ObjectInputStream(new FileInputStream(inputFile));
+            Object[] datosSerializados = (Object[]) is.readObject();
+
+            this.adminUsuarios = (AdministradorUsuarios) datosSerializados[0];
+            this.adminContenidos = (AdministradorContenido) datosSerializados[1];
+
+            is.close();
+        } catch (IOException | ClassNotFoundException e){
+            if(inputFile.exists()){
+                inputFile.delete();
+                System.out.println("Error al leer el archivo de datos");
+            } else
+                System.out.println("No se encontró el archivo de datos");
+
+            this.adminUsuarios = new AdministradorUsuarios();
+            this.adminContenidos = new AdministradorContenido();
+        }
+    }
+    
+    public void guardarDatos() throws FileNotFoundException, IOException{
+        ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream("data.bin"));
+        
+        Object[] datosSerializados = new Object[]{this.adminUsuarios, this.adminContenidos};
+
+        os.writeObject(datosSerializados);
+
+        os.close();
+    }
+
+    public AdministradorUsuarios getAdminUsuarios(){ return adminUsuarios; }
+    public AdministradorContenido getAdminContenidos(){ return adminContenidos; }
 
     public Usuario getUsuario(){ return usuario; }
 }

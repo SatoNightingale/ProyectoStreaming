@@ -58,11 +58,11 @@ public class AdministradorContenido extends DataBaseIncremental<Contenido> {
         return newPath;
     }
 
-    // public void listarContenidos(){
-    //     for (Contenido content : getContenidos()) {
-    //         System.out.println(content.getNombre() + "(" + content + ")");
-    //     }
-    // }
+    public void listarContenidos(){
+        for (Contenido content : getContenidos()) {
+            System.out.println(content.getId() + ": " + content.getNombre());
+        }
+    }
 
-    public List<Contenido> getContenidos(){ return listaElementos; }
+    public List<Contenido> getContenidos(){ return getListaElementos(); }
 }
