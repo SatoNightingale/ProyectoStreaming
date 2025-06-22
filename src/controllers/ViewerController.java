@@ -1,13 +1,14 @@
 package controllers;
 
-import java.io.FileNotFoundException;
 import contenidos.Comentario;
 import contenidos.Contenido;
 import contenidos.PlayList;
+import exceptions.MediaFileNoEncontradoException;
 import users.Administrador;
 import users.Creador;
 import users.Usuario;
 import utils.MediaPreviewExtractor;
+import utils.MensajesDialogo;
 import javafx.animation.PauseTransition;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -40,7 +41,7 @@ public class ViewerController extends SceneController{
     @FXML private Button btnEditarPerfil;
     @FXML private Button btnEnviarComentario;
     @FXML private Button btnLike;
-    @FXML private MediaView Media;
+    @FXML private MediaView Reproductor;
     @FXML private ImageView imvAlbumArt;
     @FXML private Slider sldMediaProgress;
     @FXML ImageView ibnNext;
@@ -85,7 +86,7 @@ public class ViewerController extends SceneController{
         });
 
         sldVolumen.valueProperty().addListener((observable, oldValue, newValue) -> 
-            Media.getMediaPlayer().setVolume((double) newValue));
+            Reproductor.getMediaPlayer().setVolume((double) newValue));
 
         boxBtnComentarios.setOnMouseClicked(e -> {
             panelComentarios.setVisible(true);
@@ -138,59 +139,77 @@ public class ViewerController extends SceneController{
         }
     }
 
-    private void playContenido(Contenido content){
+    private void playContenido(Contenido contenido){
         // Cerrar el mediaPlayer si está ejecutando algo
         cerrarMediaPlayer();
 
         try {
-            content.reloadMedia();
-        } catch (FileNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            contenido.reloadMedia();
+        } catch (MediaFileNoEncontradoException e) {
+            if(!controlador.getAdminContenidos().allContentsPathBroken()){
+                MensajesDialogo.mostrarError(
+                    "Error al cargar el contenido: " + contenido.getNombre() + "\n\n" + 
+                    e.getMessage() + 
+                    "\nSe reproducirá el siguiente contenido"
+                );
+
+                contenido.setBrokenPath();
+
+                playNext();
+                
+                e.printStackTrace();
+            } else {
+                MensajesDialogo.mostrarError("ERROR FATAL EN EL PROGRAMA: Todos los contenidos han sido movidos o eliminados. El programa se cerrará");
+
+                controlador.deleteDataFile();
+
+                System.exit(1);
+            }
         }
 
-        MediaPlayer player = new MediaPlayer(content.getMedia());
-        Media.setMediaPlayer(player);
+        MediaPlayer player = new MediaPlayer(contenido.getMedia());
+        Reproductor.setMediaPlayer(player);
 
         player.setAutoPlay(true);
 
         player.setVolume(sldVolumen.getValue());
 
-        if(content.getTipoContenido() == 1){ // Si el contenido es audio
+        // Actualizar controles
+        if(contenido.getTipoContenido() == 1){ // Si el contenido es audio
             imvAlbumArt.setVisible(true);
-            Media.setVisible(false);
-            configureAlbumArt(content);
+            Reproductor.setVisible(false);
+            configureAlbumArt(contenido);
         } else {
             imvAlbumArt.setVisible(false);
-            Media.setVisible(true);
+            Reproductor.setVisible(true);
         }
-
-        lblTitulo.setText(content.getNombre());
-        lblAutor.setText(content.getCreador().getNombre());
-
-        updateBtnLike(content);
-        updateBtnSuscribir(content);
-
+        lblTitulo.setText(contenido.getNombre());
+        lblAutor.setText(contenido.getCreador().getNombre());
+        updateBtnLike(contenido);
+        updateBtnSuscribir(contenido);
         initProgressSlider();
+        reconstruirComentarios(contenido);
+        lstRecomendaciones.getSelectionModel().clearAndSelect(
+            actualPlayList.getListaContenidos().indexOf(contenido)
+        );
 
-        Media.getMediaPlayer().setOnEndOfMedia(() -> {
+        usuario.getHistorial().add(contenido);
+
+        Reproductor.getMediaPlayer().setOnEndOfMedia(() -> {
             // Pequeña pausita de dos segundos antes de reproducir el siguiente contenido
             PauseTransition pausaAntesDeContinuar = new PauseTransition(Duration.seconds(2));
             pausaAntesDeContinuar.setOnFinished(e -> playNext());
             pausaAntesDeContinuar.play();
         });
-
-        reconstruirComentarios(content);
-
-        usuario.getHistorial().add(content);
     }
 
     public void cerrarMediaPlayer(){
-        MediaPlayer player = Media.getMediaPlayer();
+        MediaPlayer player = Reproductor.getMediaPlayer();
 
         if(player != null){
             controlador.usuarioVeContenido(usuario, actualPlayList.contenidoActual(), getFraccionVisto());
 
+            actualPlayList.contenidoActual().liberarMedia();
             player.dispose();
         }
     }
@@ -205,6 +224,7 @@ public class ViewerController extends SceneController{
                 throw new Exception("");
         } catch (Exception e){
             e.printStackTrace();
+            //TODO
             System.out.println("El archivo no tiene art o no se pudo cargar");
         }
     }
@@ -235,8 +255,7 @@ public class ViewerController extends SceneController{
             // Acción al dar doble click: reproducir el contenido recomendado
             celda.setOnMouseClicked(e -> {
                 if(e.getClickCount() == 2 && !celda.isEmpty()){
-                    Contenido content = celda.getItem();
-                    playContenido(content);
+                    playContenido(actualPlayList.getContenido(celda.getIndex()));
                 }
             });
 
@@ -257,7 +276,7 @@ public class ViewerController extends SceneController{
         cmbCambiarUsuario.setOnAction(e -> {
             admin.cambiarEscena("fxml/LoginView.fxml");
             cerrarMediaPlayer();
-            // System.out.println("Wanna change usuario huh");
+            // System.out.println("Wanna change user huh");
         });
 
         // cmbCambiarUsuario.setOnMouseClicked(e -> {
@@ -266,7 +285,7 @@ public class ViewerController extends SceneController{
     }
 
     private void initProgressSlider(){
-        MediaPlayer mediaPlayer = Media.getMediaPlayer();
+        MediaPlayer mediaPlayer = Reproductor.getMediaPlayer();
 
         mediaPlayer.setOnReady(() -> {
             sldMediaProgress.setMax(mediaPlayer.getTotalDuration().toSeconds());
@@ -316,7 +335,7 @@ public class ViewerController extends SceneController{
 
 
     @FXML private void initIbnPlay(MouseEvent evt){
-        MediaPlayer player = Media.getMediaPlayer();
+        MediaPlayer player = Reproductor.getMediaPlayer();
         Status estado = player.getStatus();
 
         if(estado.equals(Status.PAUSED) || estado.equals(Status.STOPPED) || estado.equals(Status.HALTED)){
@@ -405,6 +424,6 @@ public class ViewerController extends SceneController{
     }
 
     public double getFraccionVisto(){
-        return Media.getMediaPlayer().getCurrentTime().toSeconds() / Media.getMediaPlayer().getTotalDuration().toSeconds();
+        return Reproductor.getMediaPlayer().getCurrentTime().toSeconds() / Reproductor.getMediaPlayer().getTotalDuration().toSeconds();
     }
 }

@@ -32,6 +32,11 @@ public class PlayList {
         return listaContenidos.get(actual);
     }
 
+    public Contenido getContenido(int index){
+        actual = index;
+        return listaContenidos.get(index);
+    }
+
     public Contenido getLast(){
         actual = listaContenidos.size() - 1;
         return listaContenidos.get(actual);

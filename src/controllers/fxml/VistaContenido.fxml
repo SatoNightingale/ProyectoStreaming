@@ -60,7 +60,7 @@
                   <StackPane fx:id="mediaZone" style="-fx-background-color: black;" VBox.vgrow="ALWAYS">
                      <children>
                         <ImageView fx:id="imvAlbumArt" fitHeight="300.0" fitWidth="400.0" pickOnBounds="true" preserveRatio="true" />
-                        <MediaView fx:id="Media" fitHeight="300.0" fitWidth="400.0" />
+                        <MediaView fx:id="Reproductor" fitHeight="300.0" fitWidth="400.0" />
                         <VBox fx:id="panelMediaControl" alignment="BOTTOM_CENTER" maxHeight="-Infinity" opacity="0.75" spacing="5.0" style="-fx-background-color: black;" visible="false" StackPane.alignment="BOTTOM_CENTER">
                            <children>
                               <HBox prefWidth="200.0">

@@ -1,6 +1,5 @@
 package controllers;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -69,8 +68,7 @@ public class EditarPerfilController extends SceneController{
 
             MensajesDialogo.mostrarInfo("Sus datos se han cambiado con éxito");
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            MensajesDialogo.mostrarError(e.getMessage());
         }
     }
 
@@ -214,13 +212,6 @@ public class EditarPerfilController extends SceneController{
     }
 
     private void goBack(){
-        // admin.cambiarEscena("fxml/VistaContenido.fxml");
-
-        try {
-            controlador.prepararVistaContenido(usuario);
-        } catch (IOException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
-        }
+        controlador.prepararVistaContenido(usuario);
     }
 }

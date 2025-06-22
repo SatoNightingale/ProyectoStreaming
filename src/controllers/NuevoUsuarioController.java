@@ -1,5 +1,8 @@
 package controllers;
 
+import java.util.ArrayList;
+
+import exceptions.FaltanCamposObligatoriosException;
 import javafx.beans.binding.Bindings;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -9,6 +12,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import users.Usuario;
+import utils.MensajesDialogo;
 
 public class NuevoUsuarioController extends SceneController {
     @FXML private PasswordField pfdAdminPassword;
@@ -37,14 +41,26 @@ public class NuevoUsuarioController extends SceneController {
 
     public void init(Usuario user, Object...data){}
 
-    private boolean validarCampos(){
-        return cmbTipoCuenta.getSelectionModel().getSelectedIndex() != -1 &&
-            !tfdNombre.getText().isEmpty() &&
-            !pfdPassword.getText().isEmpty() &&
-            (
-                cmbTipoCuenta.getSelectionModel().getSelectedIndex() != 2 ||
-                !pfdAdminPassword.getText().isEmpty()
-            );
+    private boolean validarCampos() throws FaltanCamposObligatoriosException{
+        ArrayList<String> camposFaltan = new ArrayList<>();
+
+        if(cmbTipoCuenta.getSelectionModel().getSelectedIndex() == -1)
+            camposFaltan.add("Tipo de usuario");
+
+        if(tfdNombre.getText().isEmpty())
+            camposFaltan.add("Nombre");
+
+        if(pfdPassword.getText().isEmpty())
+            camposFaltan.add("Contraseña");
+
+        if(cmbTipoCuenta.getSelectionModel().getSelectedIndex() == 2 && pfdAdminPassword.getText().isEmpty())
+            camposFaltan.add("Contraseña de administrador");
+
+        if(!camposFaltan.isEmpty())
+            throw new FaltanCamposObligatoriosException((String[]) camposFaltan.toArray());
+
+        // Si pasa estas comprobaciones sin dar error, devuelve true
+        return true;
     }
 
     private void enviarPeticionAddUsuario(ActionEvent e){
@@ -55,11 +71,9 @@ public class NuevoUsuarioController extends SceneController {
                     pfdPassword.getText(),
                     pfdAdminPassword.getText(),
                     cmbTipoCuenta.getSelectionModel().getSelectedIndex());
-            } else { // TODO: Tírame una excepción
-                
             }
-        } catch (Exception ex){ // TODO
-            
+        } catch (Exception ex){
+            MensajesDialogo.mostrarError(ex.getMessage());   
         }
     }
 }

@@ -45,7 +45,6 @@ public class AdministradorEscenas {
             stage.setScene(sc.getScene());
         } catch(IOException e){
             MensajesDialogo.mostrarError("No se pudo cargar la escena " + nombreEscena);
-
             e.printStackTrace();
         }
     }

@@ -1,12 +1,14 @@
 package controllers;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import contenidos.Etiqueta;
+import exceptions.ArchivoNoExisteException;
+import exceptions.ArchivoNoSeleccionadoException;
+import exceptions.FaltanCamposObligatoriosException;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -34,14 +36,7 @@ public class PostContenidoController extends SceneController{
 
     @FXML
     void initialize(){
-        btnAtras.setOnAction(e -> {
-            try {
-                goBack();
-            } catch (IOException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
-            }
-        });
+        btnAtras.setOnAction(e -> goBack());
 
         mediaPreview.setOnMouseClicked(e -> cargarMediaFile());
         promptView.setOnMouseClicked(e -> cargarMediaFile());
@@ -55,35 +50,48 @@ public class PostContenidoController extends SceneController{
     }
 
     private void post(){
-        if(validarPost()){
-            List<String> nombresEtiquetas = Arrays.asList(tfdEtiquetasContenido.getText().split(" "));
-            List<Etiqueta> listaEtiquetas = new ArrayList<>();
+        try{
+            if(validarPost()){
+                List<String> nombresEtiquetas = Arrays.asList(tfdEtiquetasContenido.getText().split(" "));
+                List<Etiqueta> listaEtiquetas = new ArrayList<>();
 
-            String mediaPath = tfdFilePath.getText();
+                String mediaPath = tfdFilePath.getText();
 
-            for(int i = 0; i < nombresEtiquetas.size(); i++) {
-                listaEtiquetas.add(new Etiqueta(nombresEtiquetas.get(i), nombresEtiquetas.size() - i));
-            }
+                for(int i = 0; i < nombresEtiquetas.size(); i++) {
+                    listaEtiquetas.add(new Etiqueta(nombresEtiquetas.get(i), nombresEtiquetas.size() - i));
+                }
 
-            String nombre = tfdNombreContenido.getText();
+                String nombre = tfdNombreContenido.getText();
 
-            try{
                 controlador.postearContenido(mediaPath, nombre, (Creador) usuario, tipoContenido, listaEtiquetas);
-                MensajesDialogo.mostrarError("Su contenido se ha añadido a la plataforma");
+
+                MensajesDialogo.mostrarInfo("Su contenido se ha añadido a la plataforma");
+
                 goBack();
-            } catch (Exception ex){
-                MensajesDialogo.mostrarError("Ocurrió un error y no se pudo subir el contenido\n" + ex.getMessage());
-                ex.printStackTrace();
             }
-        } else {
-            MensajesDialogo.mostrarError("Por favor, llene todos los campos");
+        } catch(Exception ex){
+            MensajesDialogo.mostrarError(ex.getMessage());
         }
     }
 
-    private boolean validarPost(){
+    private boolean validarPost() throws ArchivoNoExisteException, FaltanCamposObligatoriosException, ArchivoNoSeleccionadoException{
         File fichero = new File(tfdFilePath.getText());
 
-        return fichero.exists() && !tfdNombreContenido.getText().isEmpty() && !tfdEtiquetasContenido.getText().isEmpty() &&  tipoContenido != -1;
+        ArrayList<String> camposFaltan = new ArrayList<>();
+
+        if(!fichero.exists()) throw new ArchivoNoExisteException(fichero.getAbsolutePath());
+
+        if(tfdNombreContenido.getText().isEmpty()) camposFaltan.add("Nombre del contenido");
+        if(tfdEtiquetasContenido.getText().isEmpty()) camposFaltan.add("Etiquetas del contenido");
+
+        if(!camposFaltan.isEmpty())
+            throw new FaltanCamposObligatoriosException((String[]) camposFaltan.toArray());
+
+        if(tipoContenido == -1) // No ha seleccionado ningún archivo
+            throw new ArchivoNoSeleccionadoException();
+
+        // Si pasa todas estas comprobaciones sin lanzar error, devuelve true
+        return true;
     }
 
     private void cargarMediaFile(){
@@ -126,8 +134,7 @@ public class PostContenidoController extends SceneController{
         }
     }
 
-    private void goBack() throws IOException{
+    private void goBack(){
         controlador.prepararVistaContenido(usuario);
-        // admin.cambiarEscena("fxml/VistaContenido.fxml");
     }
 }

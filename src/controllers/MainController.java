@@ -2,12 +2,10 @@ package controllers;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.nio.file.InvalidPathException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -16,11 +14,13 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import modelo.AdministradorContenido;
 import modelo.AdministradorUsuarios;
+
 import users.*;
 import contenidos.*;
+import exceptions.*;
+import utils.MensajesDialogo;
 
 public class MainController extends Application {
-    // private Modelo modelo;
     private AdministradorContenido adminContenidos;
     private AdministradorUsuarios adminUsuarios;
     private AdministradorEscenas adminEscenas;
@@ -32,7 +32,6 @@ public class MainController extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        // this.modelo = Modelo.cargarModelo();
         cargarDatos();
 
         adminEscenas = new AdministradorEscenas(primaryStage, this);
@@ -82,35 +81,36 @@ public class MainController extends Application {
                 creadorInit,
                 1,
                 Arrays.asList(new Etiqueta("Música", 3), new Etiqueta("Violín", 5), new Etiqueta("Electrónica", 5)));
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            MensajesDialogo.mostrarError("Error al inicializar el simulador. El programa se detendrá...");
+
+            System.exit(1);
         }
     }
 
     public void usuarioLogin(String nombre, String password) throws Exception{
         Usuario user = adminUsuarios.getUsuario(nombre, password);
-        
-        if(user != null){
-            usuario = user;
-            prepararVistaContenido(user);
-        } else{
-            throw new Exception("Usuario no encontrado"); //TODO
-        }
+        boolean usuarioExiste = adminUsuarios.usuarioExiste(nombre);
+
+        if(usuarioExiste){
+            if(user != null){
+                usuario = user;
+                prepararVistaContenido(user);
+            } else throw new IncorrectPasswordException();
+        } else new UsuarioNoExisteException(nombre);
     }
 
-    public void nuevoUsuario(String nombre, String password, String adminPassword, int tipoCuenta) throws Exception{
+    public void nuevoUsuario(String nombre, String password, String adminPassword, int tipoCuenta) throws AdminPasswordInvalidException, UsuarioYaExisteException, CampoVacioException {
         if(adminUsuarios.validarNuevoUsuario(nombre, password, adminPassword, tipoCuenta == 2)){
             Usuario nuevoUsuario = adminUsuarios.addUsuario(nombre, password, tipoCuenta);
 
             usuario = nuevoUsuario;
 
             prepararVistaContenido(nuevoUsuario);
-        } else {
-            throw new Exception("");
         }
     }
 
-    public void prepararVistaContenido(Usuario user) throws IOException{
+    public void prepararVistaContenido(Usuario user){
         PlayList recomendaciones = crearPlaylistRecomendaciones(user);
         adminEscenas.cambiarEscena("fxml/VistaContenido.fxml", recomendaciones);
     }
@@ -180,18 +180,12 @@ public class MainController extends Application {
         creador.getSuscriptores().remove(user);
     }
 
-    public void cambiarDatosUsuario(Usuario user, String password, String nuevoNombre, String nuevaPassword) throws Exception{
+    public void cambiarDatosUsuario(Usuario user, String password, String nuevoNombre, String nuevaPassword) throws UsuarioYaExisteException, IncorrectPasswordException{
         if(user.getPassword().equals(password)){
             if(!adminUsuarios.usuarioExiste(nuevoNombre) || user.getNombre().equals(nuevoNombre)){
                 adminUsuarios.cambiarDatosUsuario(user, nuevoNombre, nuevaPassword);
-            } else {
-                System.out.println("Un usuario con ese nombre ya existe");
-                // TODO
-            }
-        } else {
-            System.out.println("La contraseña es incorrecta");
-            // TODO
-        }
+            } else throw new UsuarioYaExisteException();
+        } else throw new IncorrectPasswordException();
     }
 
     public void eliminarUsuario(Usuario user){
@@ -231,10 +225,9 @@ public class MainController extends Application {
      * @param creador El creador del nuevo contenido
      * @param tipoContenido El tipo de contenido: puede ser de Video (0), o Música (1)
      * @param etiquetas Las etiquetas del contenido a crear
-     * @throws IOException Cuando hay un error al leer el archivo
-     * @throws InvalidPathException Cuando el archivo no existe, o la ruta provista contiene caracteres no soportados
+     * @throws Exception Cuando hay un error al leer el archivo
      */
-    public void postearContenido(String mediaPath, String nombre, Creador creador, int tipoContenido, List<Etiqueta> etiquetas) throws IOException{
+    public void postearContenido(String mediaPath, String nombre, Creador creador, int tipoContenido, List<Etiqueta> etiquetas) throws Exception{
         Contenido nc = adminContenidos.addContenido(mediaPath, nombre, creador, tipoContenido, etiquetas);
         
         int cantContenidos = creador.getContenidosSubidos().size();
@@ -251,17 +244,17 @@ public class MainController extends Application {
      * @param creador El creador que posee este contenido
      */
     public void retirarContenido(Contenido content){
-        System.out.println("Contenidos antes:");
-        adminContenidos.listarContenidos();
+        // System.out.println("Contenidos antes:");
+        // adminContenidos.listarContenidos();
         
-        System.out.println("ID del contenido que estoy elimianndo: " + content.getId());
+        // System.out.println("ID del contenido que estoy elimianndo: " + content.getId());
 
         Creador autor = content.getCreador();
         adminContenidos.eliminarContenido(content);
         autor.getContenidosSubidos().remove(content);
 
-        System.out.println("Contenidos ahora:");
-        adminContenidos.listarContenidos();
+        // System.out.println("Contenidos ahora:");
+        // adminContenidos.listarContenidos();
     }
     
     public void usuarioComenta(ViewerController controller, Usuario user, Contenido content, String texto){
@@ -297,10 +290,8 @@ public class MainController extends Application {
     public void intentarGuardarDatos(WindowEvent event){
         try{
             guardarDatos();
-        } catch(FileNotFoundException ex){ //TODO
-            System.out.println(ex.getMessage());
-        } catch(IOException ex) {
-            ex.printStackTrace();
+        } catch(NoSePudoGuardarDatosException e){
+            MensajesDialogo.mostrarError(e.getMessage());
         }
     }
 
@@ -316,25 +307,36 @@ public class MainController extends Application {
 
             is.close();
         } catch (IOException | ClassNotFoundException e){
-            if(inputFile.exists()){
-                inputFile.delete();
+            // Si hubo algún error al cargar las bases de datos
+            if(inputFile.exists()){ // El archivo existe, pero hubo un error al leerlo
+                deleteDataFile();
                 System.out.println("Error al leer el archivo de datos");
-            } else
+            } else // El archivo no existe
                 System.out.println("No se encontró el archivo de datos");
 
+            // Crear las bases de datos de nuevo
             this.adminUsuarios = new AdministradorUsuarios();
             this.adminContenidos = new AdministradorContenido();
         }
     }
     
-    public void guardarDatos() throws FileNotFoundException, IOException{
-        ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream("data.bin"));
-        
-        Object[] datosSerializados = new Object[]{this.adminUsuarios, this.adminContenidos};
+    public void guardarDatos() throws NoSePudoGuardarDatosException{
+        try{
+                ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream("data.bin"));
+            
+            Object[] datosSerializados = new Object[]{this.adminUsuarios, this.adminContenidos};
 
-        os.writeObject(datosSerializados);
+            os.writeObject(datosSerializados);
 
-        os.close();
+            os.close();
+        } catch (IOException e){
+            throw new NoSePudoGuardarDatosException();
+        }
+    }
+
+    public void deleteDataFile(){
+        File dataFile = new File("data.bin");
+        dataFile.delete();
     }
 
     public AdministradorUsuarios getAdminUsuarios(){ return adminUsuarios; }

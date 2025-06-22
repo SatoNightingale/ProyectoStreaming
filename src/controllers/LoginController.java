@@ -1,5 +1,8 @@
 package controllers;
 
+import java.util.ArrayList;
+
+import exceptions.FaltanCamposObligatoriosException;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -22,32 +25,26 @@ public class LoginController extends SceneController {
 
     public void init(Usuario user, Object...data){}
 
-    private boolean validarDatosUsuario(){
-        boolean band = false;
+    private boolean validarDatosUsuario() throws FaltanCamposObligatoriosException{
+        ArrayList<String> camposFaltan = new ArrayList<>();
 
-        String nombre = tfdNombre.getText();
-        String password = pfdPassword.getText();
+        if(tfdNombre.getText().isEmpty()) camposFaltan.add("Nombre");
+        if(pfdPassword.getText().isEmpty()) camposFaltan.add("Contraseña");
 
-        if(
-            !nombre.isEmpty() &&
-            !password.isEmpty()
-            // && controlador.getAdminUsuarios().usuarioExiste(nombre, password)
-        )
-        band = true;
+        if(!camposFaltan.isEmpty())
+            throw new FaltanCamposObligatoriosException((String[]) camposFaltan.toArray());
 
-        return band;
+        // Si pasa estas comprobaciones sin dar error, devuelve true
+        return true;
     }
 
     private void enviarPeticionLogin(ActionEvent e){
         try{
             if(validarDatosUsuario()){
                 controlador.usuarioLogin(tfdNombre.getText(), pfdPassword.getText());
-            } else { // TODO: Tírame una excepción
-                MensajesDialogo.mostrarError("Por favor, llene todos los campos");
             }
         } catch(Exception ex){
-            ex.printStackTrace();
-            MensajesDialogo.mostrarError("Datos de usuario incorrectos");
+            MensajesDialogo.mostrarError(ex.getMessage());
         }
     }
 }

@@ -1,16 +1,16 @@
 package contenidos;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import exceptions.MediaFileNoEncontradoException;
 import javafx.scene.media.Media;
 import users.*;
 
 public class Contenido implements Serializable{
-    protected transient Media media;        // El objeto javafx.Media que contiene los datos de este contenido
+    protected transient Media media;        // El objeto javafx.Media que contiene los datos del archivo a reproducir
     protected String mediaPath;             // ruta al contenido
     protected int id;                       // ID único del contenido en la contentDB
     protected String nombre;                // Nombre del contenido
@@ -23,7 +23,7 @@ public class Contenido implements Serializable{
     protected int reproducciones;           // La cantidad de reproducciones de este contenido
     protected double sumTiempoReproducido;  // La suma de los porcientos del contenido reproducido en cada visualización
 
-    public Contenido(int id, String mediaPath, String nombre, int tipo, Creador creador, ListaEtiquetas etiquetas) throws FileNotFoundException {
+    public Contenido(int id, String mediaPath, String nombre, int tipo, Creador creador, ListaEtiquetas etiquetas) throws MediaFileNoEncontradoException {
         this.mediaPath = mediaPath;
         this.media = cargarMedia(mediaPath);
         
@@ -39,14 +39,14 @@ public class Contenido implements Serializable{
         duracion = media.getDuration().toSeconds();
     }
 
-    private Media cargarMedia(String path) throws FileNotFoundException{
+    private Media cargarMedia(String path) throws MediaFileNoEncontradoException{
         File file = new File(path);
         String URI;
 
         if(file.exists())
             URI = file.toURI().toString();
         else
-            throw new FileNotFoundException("El archivo " + path + " no existe");
+            throw new MediaFileNoEncontradoException(this, path);
         
         return new Media(URI);
     }
@@ -55,7 +55,12 @@ public class Contenido implements Serializable{
         return getLikes() * 3 + promedioTiempoReproducido() * 5 + comentarios.size();
     }
 
-    public void reloadMedia() throws FileNotFoundException{ this.media = cargarMedia(mediaPath); }
+    // Cada vez que el contenido se va a ejecutar, se espera que primero se recargue el Media de la carpeta de medios del programa, y que al terminar se libere de la memoria. De esa forma, solo el Media que se está reproduciendo está cargado, y el uso de la memoria es más eficiente
+    public void reloadMedia() throws MediaFileNoEncontradoException {
+        this.media = cargarMedia(mediaPath);
+    }
+
+    public void liberarMedia() { this.media = null; }
 
     /*
      * sumTiempoReproducido = porc1 + porc2 + porc3 + ... + porcN (porcX - porciento del contenido reproducido en cada reproduccion)
@@ -70,6 +75,12 @@ public class Contenido implements Serializable{
         reproducciones++;
         sumTiempoReproducido += porc;
     }
+
+    /**
+     * Este método se usa para indicar que el archivo al que está asociado este contenido no existe. De esta manera se evita que el reproductor intente ejecutarlo
+     */
+    public void setBrokenPath(){ this.mediaPath = "BROKEN_PATH"; }
+    public boolean pathIsBroken(){ return this.mediaPath.equals("BROKEN_PATH"); }
 
     public int getId(){ return id; }
     public String getNombre() {return nombre; }
